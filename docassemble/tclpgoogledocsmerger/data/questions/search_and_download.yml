@@ -1,0 +1,103 @@
+metadata:
+  title: TCLP Search and Download
+  short title: Serach
+---
+modules:
+  - .test
+  - .data
+---
+objects: 
+  - template_file: DAFile
+  - filled_template: DADict
+---
+objects:
+  - static_file: DAStaticFile.using(filename='data/sources/Grid_view.csv')
+---
+code: |
+  import pandas as pd
+  airtable_base = pd.read_csv(static_file.path())
+  # Some hardcoded cleaning on the data, particularly lists in columns
+  pattern = r'.*\"(.*)\".*'
+  repl = lambda m: m.group(0).replace(m.group(1), m.group(1).replace(',', ';'))
+  
+  # Fancy apostrophes are dumb, replace with a normal one
+  airtable_base["Child's name"] = airtable_base["Child's name"].replace('’', "'")
+  
+  # Clean data in columns with list entries with commas in the strings
+  cols_with_comma_entries = ["Practice Area", "COP26 Net Zero Chapter", "Timeline Sub-Phase"]
+  for col in cols_with_comma_entries:
+    airtable_base[col] = airtable_base[col].str.replace(pattern, repl, regex=True)
+    
+  # Actually split the comma separated lists in certain cells into actual lists
+  cols_with_list_vals = cols_with_comma_entries + ["GIC Industry", "GIC Industry Group", "Timeline Main Phase", "NZ Scopes Field"]
+  for col in cols_with_list_vals:
+    airtable_base[col] = airtable_base[col].str.split(',')
+  
+  cols_with_indices = ["GIC Industry", "NZ Scopes Field"]
+  airtable_indices = create_indices(airtable_base, cols_with_indices)
+---
+id: Main order block
+mandatory: True
+code: |
+  industry_type
+  grab_documents
+  temp
+  download_filled
+---
+question: |
+  Temp
+continue button field: temp
+---
+code: |
+  airtable_industry_types = sorted(list(airtable_indices[0].keys()))
+---
+id: search variables
+question: |
+  What do you want to search?
+subquestion: |
+  Select the attributes you want in your clauses
+fields:
+  - Industry: industry_type
+    datatype: dropdown
+    code: |
+      airtable_industry_types
+---
+id: grab documents
+code: |
+  all_clause_docs2 = []
+  all_clauses = []
+  row_with_industry = airtable_indices[0].get(industry_type, [])
+  
+  selected_rows = airtable_base[airtable_base["Child's name"].isin(row_with_industry)]
+  ii = 0
+  for row in selected_rows.iterrows():
+    gdrive_id = row[1]['gdrive-id']
+    if isinstance(gdrive_id, float):
+      continue
+    all_clauses.append(row[1]["Child's name"])
+    all_clause_docs2.append(download_drive_docx_file(gdrive_id, f'doc_{ii}'))
+    ii += 1
+  del gdrive_id
+  grab_documents = True
+---
+id: download filled
+event: download_filled
+question: |
+  % if all_clauses:
+  Download Your Completed Document
+  % else:
+  No matching clauses found.
+  % endif
+subquestion: |
+  ${ filled_template['final'] }
+  
+  % for clause_doc in all_clause_docs2:
+  * ${ clause_doc }
+  % endfor
+---
+attachment:
+  variable name: filled_template[i]
+  name: Requested Clauses
+  filename: requested_clauses
+  skip undefined: True
+  docx template file: ClausesTemplate.docx
