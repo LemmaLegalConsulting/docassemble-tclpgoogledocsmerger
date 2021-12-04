@@ -26,12 +26,9 @@ code: |
   #except Exception as ex:
   #  clauses = []
   #  log(f'Just "Clauses" ex: {ex}')
-  try: 
-    clauses2 = get_files_in_folder(folder_id=full_clauses_folder_id)
-    clauses2.sort()
-  except Exception as ex:
-    clauses2= []
-    log(f'Full path ex: {ex}')
+  from operator import itemgetter
+  clauses2 = get_files_in_folder(folder_id=full_clauses_folder_id)
+  clauses2.sort(key=itemgetter('name'))
 ---
 mandatory: True
 question: |

@@ -51,6 +51,10 @@ continue button field: temp
 code: |
   airtable_industry_types = sorted(list(airtable_indices[0].keys()))
 ---
+code: |
+  full_clauses_folder_id = "1YDT_u4AJMzwJKNcAH2naYHhycNd-iHvt"
+  all_files = get_files_in_folder(folder_id=full_clauses_folder_id)
+---
 id: search variables
 question: |
   What do you want to search?
@@ -71,13 +75,12 @@ code: |
   selected_rows = airtable_base[airtable_base["Child's name"].isin(row_with_industry)]
   ii = 0
   for row in selected_rows.iterrows():
-    gdrive_id = row[1]['gdrive-id']
-    if isinstance(gdrive_id, float):
-      continue
+    g_files = get_files_for_clause(all_files, row[1]["Child's name"])
     all_clauses.append(row[1]["Child's name"])
-    all_clause_docs2.append(download_drive_docx_file(gdrive_id, f'doc_{ii}'))
+    for g_file in g_files:
+      if 'id' in g_file:
+        all_clause_docs2.append(download_drive_docx_file(g_file.get('id'), f'doc_{ii}'))
     ii += 1
-  del gdrive_id
   grab_documents = True
 ---
 id: download filled
