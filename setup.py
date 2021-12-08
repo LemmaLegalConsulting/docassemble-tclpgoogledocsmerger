@@ -43,9 +43,9 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
     return out
 
 setup(name='docassemble.tclpgoogledocsmerger',
-      version='0.0.3',
+      version='0.0.4',
       description=('A docassemble extension that helps a user search for docs in a Google Drive based on tags / metadata'),
-      long_description='# docassemble.tclpgoogledocsmerger\r\n\r\nA docassemble extension that helps a user search for docs in a Google Drive based on tags / metadata.\r\n\r\nMade in association with The [Chancery Lane Project](https://chancerylaneproject.org/)\r\n\r\n## Author\r\n\r\nBryce Willey, Quinten Steenhuis\r\n\r\n',
+      long_description='# docassemble.tclpgoogledocsmerger\n\nA docassemble extension that helps a user search for docs in a Google Drive based on tags / metadata.\n\nMade in association with The [Chancery Lane Project](https://chancerylaneproject.org/)\n\n## Author\n\nBryce Willey, Quinten Steenhuis\n\n',
       long_description_content_type='text/markdown',
       author='Bryce Willey',
       author_email='bryce.steven.willey@gmail.com',

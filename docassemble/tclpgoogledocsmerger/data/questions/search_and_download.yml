@@ -6,50 +6,37 @@ modules:
   - .test
   - .data
 ---
+code: |
+  selectable_columns = [
+    "GIC Industry", 'GIC Industry Group', 
+    'COP26 Net Zero Chapter', 
+    "NZ Scopes Field", 
+    'Timeline Main Phase', 'Timeline Sub-Phase', 
+    'Practice Area'
+  ]
+---
 objects: 
   - template_file: DAFile
   - filled_template: DADict
+  - multi_index: MultiSelectIndex.using(import_path=static_file.path(), cols_with_indices=selectable_columns)
 ---
 objects:
   - static_file: DAStaticFile.using(filename='data/sources/Grid_view.csv')
----
-code: |
-  import pandas as pd
-  airtable_base = pd.read_csv(static_file.path())
-  # Some hardcoded cleaning on the data, particularly lists in columns
-  pattern = r'.*\"(.*)\".*'
-  repl = lambda m: m.group(0).replace(m.group(1), m.group(1).replace(',', ';'))
-  
-  # Fancy apostrophes are dumb, replace with a normal one
-  airtable_base["Child's name"] = airtable_base["Child's name"].replace('’', "'")
-  
-  # Clean data in columns with list entries with commas in the strings
-  cols_with_comma_entries = ["Practice Area", "COP26 Net Zero Chapter", "Timeline Sub-Phase"]
-  for col in cols_with_comma_entries:
-    airtable_base[col] = airtable_base[col].str.replace(pattern, repl, regex=True)
-    
-  # Actually split the comma separated lists in certain cells into actual lists
-  cols_with_list_vals = cols_with_comma_entries + ["GIC Industry", "GIC Industry Group", "Timeline Main Phase", "NZ Scopes Field"]
-  for col in cols_with_list_vals:
-    airtable_base[col] = airtable_base[col].str.split(',')
-  
-  cols_with_indices = ["GIC Industry", "NZ Scopes Field"]
-  airtable_indices = create_indices(airtable_base, cols_with_indices)
 ---
 id: Main order block
 mandatory: True
 code: |
   industry_type
   grab_documents
-  temp
   download_filled
 ---
-question: |
-  Temp
-continue button field: temp
----
 code: |
-  airtable_industry_types = sorted(list(airtable_indices[0].keys()))
+  airtable_industry_types = multi_index.get_values('GIC Industry')
+  nz_scope_types = multi_index.get_values('NZ Scopes Field')
+  cop_26_priority_types = multi_index.get_values('COP26 Net Zero Chapter')
+  gic_industry_group_types = multi_index.get_values('GIC Industry Group')
+  timeline_main_types = multi_index.get_values('Timeline Main Phase')
+  timeline_sub_types = multi_index.get_values('Timeline Sub-Phase')
 ---
 code: |
   full_clauses_folder_id = "1YDT_u4AJMzwJKNcAH2naYHhycNd-iHvt"
@@ -63,16 +50,56 @@ subquestion: |
 fields:
   - Industry: industry_type
     datatype: dropdown
+    required: False
     code: |
       airtable_industry_types
+  - NZ Scope: nz_scope
+    datatype: dropdown
+    required: False
+    code: |
+      nz_scope_types
+  - Cop 26 Priority: cop_26
+    datatype: dropdown
+    required: False
+    code: |
+      cop_26_priority_types
+  - GIC Industry Group: industry_group
+    datatype: dropdown
+    required: False
+    code: |
+      gic_industry_group_types
+  - Timeline (Main): timeline_type
+    datatype: dropdown
+    required: False
+    code: |
+      timeline_main_types
+  - Timeline (Sub): timeline_sub_type
+    datatype: dropdown
+    required: False
+    code: |
+      timeline_sub_types
+---
+id: select rows
+code: |
+  query_list = []
+  for col_name, col_var_name in [
+        ('GIC Industry', 'industry_type'), 
+        ('NZ Scopes Field', 'nz_scope'), 
+        ('COP26 Net Zero Chapter', 'cop_26'),
+        ('Timeline Main Phase', 'timeline_type'),
+        ('Timeline Sub-Phase', 'timeline_sub_type'),
+        ('GIC Industry Group', 'industry_group')]:
+    if defined(col_var_name) and value(col_var_name) != "":
+      query_list.append((col_name, [value(col_var_name)]))
+
+  row_ids = multi_index.query(query_list)
+  #del query_list
 ---
 id: grab documents
 code: |
   all_clause_docs2 = []
   all_clauses = []
-  row_with_industry = airtable_indices[0].get(industry_type, [])
-  
-  selected_rows = airtable_base[airtable_base["Child's name"].isin(row_with_industry)]
+  selected_rows = multi_index.get_full_rows(row_ids) 
   ii = 0
   for row in selected_rows.iterrows():
     g_files = get_files_for_clause(all_files, row[1]["Child's name"])
