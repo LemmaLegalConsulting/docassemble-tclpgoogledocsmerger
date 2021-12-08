@@ -1,6 +1,6 @@
 from docassemble.base.util import DAGoogleAPI, DAFile
 from docassemble.base.functions import currency
-import apiclient
+import googleapiclient
 
 api = DAGoogleAPI()
 #__all__ = ['download_drive_file_as_docx', 'download_drive_docx_file']
@@ -15,7 +15,7 @@ def download_drive_file_as_docx(file_id, filename):
     with open(the_file.path(), 'wb') as fh:
         response = service.files().export_media(fileId=file_id, 
             mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
-        downloader = apiclient.http.MediaIoBaseDownload(fh, response)
+        downloader = googleapiclient.http.MediaIoBaseDownload(fh, response)
         done = False
         while done is False:
             status, done = downloader.next_chunk()
@@ -31,7 +31,7 @@ def download_drive_docx_file(file_id, filename):
     service = api.drive_service()
     with open(the_file.path(), 'wb') as fh:
         response = service.files().get_media(fileId=file_id)
-        downloader = apiclient.http.MediaIoBaseDownload(fh, response)
+        downloader = googleapiclient.http.MediaIoBaseDownload(fh, response)
         done = False
         while done is False:
             status, done = downloader.next_chunk()
