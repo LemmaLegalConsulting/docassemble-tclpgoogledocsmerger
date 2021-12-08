@@ -92,7 +92,7 @@ question: |
   No matching clauses found.
   % endif
 subquestion: |
-  ${ filled_template['final'].pdf }
+  ${ filled_template['final'] }
      
   % for clause_doc in all_clause_docs2:
   * ${ clause_doc }
