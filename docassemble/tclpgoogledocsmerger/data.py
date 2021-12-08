@@ -38,7 +38,7 @@ def _create_index(table, col:str, id_col:str=None) -> Dict[str, List[str]]:
 class MultiSelectIndex(DAObject):
   def init(self, *pargs, **kwargs):
     super().init(*pargs, **kwargs)
-    import_path = pargs[0]
+    import_path = kwargs.get('import_path', '')
     clean_data = kwargs.get('clean_data', True)
     cols_with_indices = kwargs.get('cols_with_indices', [])
     self.table = pd.read_csv(import_path)
@@ -75,7 +75,7 @@ class MultiSelectIndex(DAObject):
     # Get only the row ids that match all of the column queries
     return sorted(reduce(lambda a, b: a.intersection(b), rows_per_col.values(), next(iter(rows_per_col.values()))))
 
-  def get_full_rows(self, row_ids, id_col="Child's Name"):
+  def get_full_rows(self, row_ids, id_col="Child's name"):
     return self.table[self.table[id_col].isin(row_ids)]
 
   def get_values(self, col_name:str) -> List[str]:

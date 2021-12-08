@@ -18,7 +18,7 @@ code: |
 objects: 
   - template_file: DAFile
   - filled_template: DADict
-  - multi_index: MultiSelectIndex.using('data/sources/Grid_view.csv', cols_with_indices=selectable_columns)
+  - multi_index: MultiSelectIndex.using(import_path=static_file.path(), cols_with_indices=selectable_columns)
 ---
 objects:
   - static_file: DAStaticFile.using(filename='data/sources/Grid_view.csv')
@@ -78,11 +78,6 @@ fields:
     required: False
     code: |
       timeline_sub_types
-  - All or any?: all_or_any
-    datatype: radio
-    choices:
-      - All: all
-      - Any: any
 ---
 id: select rows
 code: |
@@ -94,11 +89,11 @@ code: |
         ('Timeline Main Phase', 'timeline_type'),
         ('Timeline Sub-Phase', 'timeline_sub_type'),
         ('GIC Industry Group', 'industry_group')]:
-    if defined(col_var_name):
-      query_list.append((col_var_name, [value(col_var_name)]))
+    if defined(col_var_name) and value(col_var_name) != "":
+      query_list.append((col_name, [value(col_var_name)]))
 
   row_ids = multi_index.query(query_list)
-  del query_list
+  #del query_list
 ---
 id: grab documents
 code: |
