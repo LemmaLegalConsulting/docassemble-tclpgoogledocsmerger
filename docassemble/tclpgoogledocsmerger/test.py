@@ -5,38 +5,32 @@ import googleapiclient
 api = DAGoogleAPI()
 #__all__ = ['download_drive_file_as_docx', 'download_drive_docx_file']
 
-def download_drive_file_as_docx(file_id, filename):
+def download_drive_files_docx(file_ids, filename_base, export_to_docx=False):
+  if isinstance(file_ids, str):
+    file_ids = [file_ids]
+      
+  if filename_base[-5:].lower() == ".docx":
+    filename_base = filename_base[:-5]
+    
+  service = api.drive_service()
+  done_files = []
+  for idx, file_id in enumerate(file_ids):
     the_file = DAFile()
     the_file.set_random_instance_name()
-    if not filename[-5:].lower() == ".docx":
-        filename = filename + ".docx"
-    the_file.initialize(filename=filename)
-    service = api.drive_service()
+    the_file.initialize(filename=f'{filename_base}_{idx}.docx')
     with open(the_file.path(), 'wb') as fh:
+      if export_to_docx:
         response = service.files().export_media(fileId=file_id, 
             mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
-        downloader = googleapiclient.http.MediaIoBaseDownload(fh, response)
-        done = False
-        while done is False:
-            status, done = downloader.next_chunk()
-    the_file.commit()
-    return the_file
-
-def download_drive_docx_file(file_id, filename):
-    the_file = DAFile()
-    the_file.set_random_instance_name()
-    if not filename[-5:].lower() == ".docx":
-        filename = filename + ".docx"
-    the_file.initialize(filename=filename)
-    service = api.drive_service()
-    with open(the_file.path(), 'wb') as fh:
+      else:
         response = service.files().get_media(fileId=file_id)
-        downloader = googleapiclient.http.MediaIoBaseDownload(fh, response)
-        done = False
-        while done is False:
-            status, done = downloader.next_chunk()
+      downloader = googleapiclient.http.MediaIoBaseDownload(fh, response)
+      done = False
+      while done is False:
+        status, done = downloader.next_chunk()
     the_file.commit()
-    return the_file
+    done_files.append(the_file)
+  return done_files
   
 def get_folder_id(folder_name) -> str:
   service = api.drive_service()

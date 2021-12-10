@@ -8,10 +8,12 @@ modules:
 ---
 code: |
   selectable_columns = [
-    "GIC Industry", 'GIC Industry Group', 
-    'COP26 Net Zero Chapter', 
-    "NZ Scopes Field", 
-    'Timeline Main Phase', 'Timeline Sub-Phase', 
+    "GIC Industry",
+    'GIC Industry Group',
+    'COP26 Net Zero Chapter',
+    "NZ Scopes Field",
+    'Timeline Main Phase',
+    'Timeline Sub-Phase',
     'Practice Area'
   ]
 ---
@@ -49,32 +51,32 @@ subquestion: |
   Select the attributes you want in your clauses
 fields:
   - Industry: industry_type
-    datatype: dropdown
+    datatype: multiselect
     required: False
     code: |
       airtable_industry_types
   - NZ Scope: nz_scope
-    datatype: dropdown
+    datatype: multiselect
     required: False
     code: |
       nz_scope_types
-  - Cop 26 Priority: cop_26
-    datatype: dropdown
+  - Cop 26 Chapter: cop_26
+    datatype: multiselect
     required: False
     code: |
       cop_26_priority_types
   - GIC Industry Group: industry_group
-    datatype: dropdown
+    datatype: multiselect
     required: False
     code: |
       gic_industry_group_types
   - Timeline (Main): timeline_type
-    datatype: dropdown
+    datatype: multiselect
     required: False
     code: |
       timeline_main_types
   - Timeline (Sub): timeline_sub_type
-    datatype: dropdown
+    datatype: multiselect
     required: False
     code: |
       timeline_sub_types
@@ -82,32 +84,35 @@ fields:
 id: select rows
 code: |
   query_list = []
-  for col_name, col_var_name in [
-        ('GIC Industry', 'industry_type'), 
-        ('NZ Scopes Field', 'nz_scope'), 
-        ('COP26 Net Zero Chapter', 'cop_26'),
-        ('Timeline Main Phase', 'timeline_type'),
-        ('Timeline Sub-Phase', 'timeline_sub_type'),
-        ('GIC Industry Group', 'industry_group')]:
-    if defined(col_var_name) and value(col_var_name) != "":
-      query_list.append((col_name, [value(col_var_name)]))
+  for col_name, col_vals in [
+        ('GIC Industry', industry_type), 
+        ('NZ Scopes Field', nz_scope), 
+        ('COP26 Net Zero Chapter', cop_26),
+        ('Timeline Main Phase', timeline_type),
+        ('Timeline Sub-Phase', timeline_sub_type),
+        ('GIC Industry Group', industry_group)]:
+    if isinstance(col_vals, DADict):
+      if col_vals.any_true():
+        query_list.append([col_name, col_vals.true_values()])
+    elif col_vals != "":
+      query_list.append((col_name, [col_vals]))
 
   row_ids = multi_index.query(query_list)
   #del query_list
 ---
 id: grab documents
 code: |
-  all_clause_docs2 = []
+  all_clause_ids = []
   all_clauses = []
   selected_rows = multi_index.get_full_rows(row_ids) 
-  ii = 0
   for row in selected_rows.iterrows():
     g_files = get_files_for_clause(all_files, row[1]["Child's name"])
-    all_clauses.append(row[1]["Child's name"])
+    if g_files:
+      all_clauses.append(row[1]["Child's name"])
     for g_file in g_files:
       if 'id' in g_file:
-        all_clause_docs2.append(download_drive_docx_file(g_file.get('id'), f'doc_{ii}'))
-    ii += 1
+        all_clause_ids.append(g_file.get('id'))
+  all_clause_docs2 = download_drive_files_docx(all_clause_ids, 'doc_')
   grab_documents = True
 ---
 id: download filled
@@ -119,11 +124,15 @@ question: |
   No matching clauses found.
   % endif
 subquestion: |
+  % if all_clauses:
+
   ${ filled_template['final'] }
      
   % for clause_doc in all_clause_docs2:
   * ${ clause_doc }
   % endfor
+  
+  % endif
 ---
 attachment:
   variable name: filled_template[i]
