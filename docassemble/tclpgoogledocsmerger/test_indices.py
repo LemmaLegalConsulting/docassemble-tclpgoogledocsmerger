@@ -21,13 +21,13 @@ class TestMultiSelectIndex(unittest.TestCase):
     self.assertEqual(simple, ["Alex's Clause", "Ming's Clause", "Suki's Clause"])
 
     two_columns = self.index.query([('GIC Industry', ['Information Technology']),
-        ('COP26 Net Zero Chapter', ['"Industry (including Heavy Industry; Retail & FMCG; ICT & Media)"'])])
+        ('COP26 Net Zero Chapter', ['"Industry (including Heavy Industry, Retail & FMCG, ICT & Media)"'])])
     self.assertEqual(two_columns, ["Alex's Clause"])
 
     multiple_answers = two_columns = self.index.query(
         [('GIC Industry', ['Information Technology']),
              ('COP26 Net Zero Chapter', [
-                  '"Industry (including Heavy Industry; Retail & FMCG; ICT & Media)"',
+                  '"Industry (including Heavy Industry, Retail & FMCG, ICT & Media)"',
                   'Law & Legal Structures'
                   ])])
     self.assertEqual(multiple_answers, ["Alex's Clause", "Ming's Clause", "Suki's Clause"])

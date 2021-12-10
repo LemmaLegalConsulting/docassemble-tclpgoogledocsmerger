@@ -36,35 +36,27 @@ def _create_index(table, col:str, id_col:str=None) -> Dict[str, List[str]]:
       index[col_val].append(row_id)
   return index
 
-def split_and_strip(list_str, delimiter=','):
-  return [entry.strip() for entry in list_str.split(delimiter) if entry.strip()]
+# Matches all commas that are outside of quotes, i.e. only delimiter commas
+# Wish I had written this one: https://stackoverflow.com/a/21106122/11416267
+comma_outside_quotes = re.compile(r'(?!\B"[^"]*),(?![^"]*"\B)')
 
-def clean_commas(list_str:str):
-  pattern = r'.*\"(.*)\".*'
-  m = re.search(pattern, list_str)
-  if m:
-    element_no_commas = m.group(1).replace(',', ';')
-    return m.group(0).replace(m.group(1), element_no_commas) 
-  else:
-    return list_str
+def split_and_strip(list_str):
+  return [entry.strip() for entry in comma_outside_quotes.split(list_str) if entry.strip()]
 
 class MultiSelectIndex(DAObject):
   def init(self, *pargs, **kwargs):
     super().init(*pargs, **kwargs)
     import_path = kwargs.get('import_path', '')
-    clean_data = kwargs.get('clean_data', True)
     cols_with_indices = kwargs.get('cols_with_indices', [])
-    repl = lambda m: m.group(0).replace(m.group(1), m.group(1).replace(',', ';'))
-    clean_and_split_func = lambda y: split_and_strip(clean_commas(y)) 
     self.table = pd.read_csv(import_path,
         # Some hardcoded cleaning on the data, particularly lists in columns
         converters={
             # Fancy apostrophes are dumb, replace with a normal one
             "Child's name": lambda y: y.replace('’', "'"),
             # Clean data in columns with list entries with commas in the strings
-            "Practice Area": clean_and_split_func,
-            "COP26 Net Zero Chapter": clean_and_split_func,
-            "Timeline Sub-Phase": clean_and_split_func,
+            "Practice Area": split_and_strip, 
+            "COP26 Net Zero Chapter": split_and_strip, 
+            "Timeline Sub-Phase": split_and_strip, 
             # Split the comma separated lists into actual lists
             "GIC Industry": split_and_strip,
             "GIC Industry Group": split_and_strip,
