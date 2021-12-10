@@ -43,7 +43,7 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
     return out
 
 setup(name='docassemble.tclpgoogledocsmerger',
-      version='0.0.4',
+      version='0.0.5',
       description=('A docassemble extension that helps a user search for docs in a Google Drive based on tags / metadata'),
       long_description='# docassemble.tclpgoogledocsmerger\r\n\r\nA docassemble extension that helps a user search for docs in a Google Drive based on tags / metadata.\r\n\r\nMade in association with The [Chancery Lane Project](https://chancerylaneproject.org/)\r\n\r\n## Author\r\n\r\nBryce Willey, Quinten Steenhuis\r\n\r\n',
       long_description_content_type='text/markdown',
@@ -53,7 +53,7 @@ setup(name='docassemble.tclpgoogledocsmerger',
       url='https://docassemble.org',
       packages=find_packages(),
       namespace_packages=['docassemble'],
-      install_requires=['airtable-python-wrapper>=0.15.2', 'google-api-python-client>=2.33.0', 'numpy>=1.0.4', 'pandas>=1.2.4'],
+      install_requires=['airtable-python-wrapper>=0.15.2', 'google-api-python-client>=2.15.0', 'numpy>=1.0.4', 'pandas>=1.2.4'],
       zip_safe=False,
       package_data=find_package_data(where='docassemble/tclpgoogledocsmerger/', package='docassemble.tclpgoogledocsmerger'),
      )
