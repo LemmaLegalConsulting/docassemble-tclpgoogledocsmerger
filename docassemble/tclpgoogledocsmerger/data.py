@@ -5,6 +5,8 @@ from typing import Dict, List, Optional, Tuple
 from docassemble.base.core import DAObject
 from functools import reduce
 
+__all__ = ['MultiSelectIndex']
+
 def create_indices(table, cols:List[str], id_col:Optional[str]=None) -> Dict[str, Dict[str, List[str]]]:
   """Given a pandas "base" (from Airtable) and a list of columns / fields to make indices of,
   returns a list (one per requested column) of dictionaries from the entries in the given column to the
@@ -41,7 +43,7 @@ def _create_index(table, col:str, id_col:str=None) -> Dict[str, List[str]]:
 comma_outside_quotes = re.compile(r'(?!\B"[^"]*),(?![^"]*"\B)')
 
 def split_and_strip(list_str):
-  return [entry.strip() for entry in comma_outside_quotes.split(list_str) if entry.strip()]
+  return [entry.strip().strip('"') for entry in comma_outside_quotes.split(list_str) if entry.strip()]
 
 class MultiSelectIndex(DAObject):
   def init(self, *pargs, **kwargs):
