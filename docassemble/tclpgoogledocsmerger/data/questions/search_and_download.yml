@@ -1,10 +1,21 @@
+---
+features:
+  css: bootstrap-multiselect.min.css
+  javascript: bootstrap-multiselect.min.js
+  # https://davidstutz.github.io/bootstrap-multiselect/#getting-started
+---
 metadata:
   title: TCLP Search and Download
-  short title: Serach
+  short title: Search
 ---
 modules:
   - .test
   - .data
+---
+features:
+  css: bootstrap-multiselect.min.css
+  javascript: bootstrap-multiselect.min.js
+  # https://davidstutz.github.io/bootstrap-multiselect/#getting-started
 ---
 code: |
   selectable_columns = [
@@ -49,35 +60,47 @@ subquestion: |
   Select the attributes you want in your clauses
 fields:
   - Industry: industry_type
-    datatype: dropdown
+    datatype: multiselect
     required: False
     code: |
       airtable_industry_types
   - NZ Scope: nz_scope
-    datatype: dropdown
+    datatype: multiselect
     required: False
     code: |
       nz_scope_types
   - Cop 26 Priority: cop_26
-    datatype: dropdown
+    datatype: multiselect
     required: False
     code: |
       cop_26_priority_types
   - GIC Industry Group: industry_group
-    datatype: dropdown
+    datatype: multiselect
     required: False
     code: |
       gic_industry_group_types
   - Timeline (Main): timeline_type
-    datatype: dropdown
+    datatype: multiselect
     required: False
     code: |
       timeline_main_types
   - Timeline (Sub): timeline_sub_type
-    datatype: dropdown
+    datatype: multiselect
     required: False
     code: |
       timeline_sub_types
+script: |
+  <script type="text/javascript">
+      $(document).ready(function() {
+          $('#aW5kdXN0cnlfdHlwZQ').multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true});
+          $('#bnpfc2NvcGU').multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true});
+          $('#Y29wXzI2').multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true});
+          $('#aW5kdXN0cnlfZ3JvdXA').multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true});
+          $('#dGltZWxpbmVfdHlwZQ').multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true});       
+          // dGltZWxpbmVfc3ViX3R5cGU
+          $('#dGltZWxpbmVfc3ViX3R5cGU').multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true});       
+      });
+  </script>      
 ---
 id: select rows
 code: |
@@ -89,8 +112,8 @@ code: |
         ('Timeline Main Phase', 'timeline_type'),
         ('Timeline Sub-Phase', 'timeline_sub_type'),
         ('GIC Industry Group', 'industry_group')]:
-    if defined(col_var_name) and value(col_var_name) != "":
-      query_list.append((col_name, [value(col_var_name)]))
+    if value(col_var_name).any_true():
+      query_list.append((col_name, value(col_var_name).true_values()))
 
   row_ids = multi_index.query(query_list)
   #del query_list
