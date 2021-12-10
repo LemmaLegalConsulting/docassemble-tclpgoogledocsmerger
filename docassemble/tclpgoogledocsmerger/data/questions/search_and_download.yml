@@ -1,10 +1,21 @@
+---
+features:
+  css: bootstrap-multiselect.min.css
+  javascript: bootstrap-multiselect.min.js
+  # https://davidstutz.github.io/bootstrap-multiselect/#getting-started
+---
 metadata:
   title: TCLP Search and Download
-  short title: Serach
+  short title: Search
 ---
 modules:
   - .test
   - .data
+---
+features:
+  css: bootstrap-multiselect.min.css
+  javascript: bootstrap-multiselect.min.js
+  # https://davidstutz.github.io/bootstrap-multiselect/#getting-started
 ---
 code: |
   selectable_columns = [
@@ -80,6 +91,17 @@ fields:
     required: False
     code: |
       timeline_sub_types
+script: |
+  <script type="text/javascript">
+      $(document).ready(function() {
+          $('#aW5kdXN0cnlfdHlwZQ').multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true});
+          $('#bnpfc2NvcGU').multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true});
+          $('#Y29wXzI2').multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true});
+          $('#aW5kdXN0cnlfZ3JvdXA').multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true});
+          $('#dGltZWxpbmVfdHlwZQ').multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true});       
+          $('#dGltZWxpbmVfc3ViX3R5cGU').multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true});       
+      });
+  </script>      
 ---
 id: select rows
 code: |
@@ -96,7 +118,6 @@ code: |
         query_list.append([col_name, col_vals.true_values()])
     elif col_vals != "":
       query_list.append((col_name, [col_vals]))
-
   row_ids = multi_index.query(query_list)
   #del query_list
 ---
