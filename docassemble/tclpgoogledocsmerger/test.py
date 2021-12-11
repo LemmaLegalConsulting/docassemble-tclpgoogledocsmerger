@@ -1,9 +1,13 @@
 from docassemble.base.util import DAGoogleAPI, DAFile
 from docassemble.base.functions import currency
 import googleapiclient
+from docassemble.base.pandoc import word_to_markdown
 
 api = DAGoogleAPI()
-#__all__ = ['download_drive_file_as_docx', 'download_drive_docx_file']
+__all__ = ['word_to_markdown', 'download_drive_files_docx',
+'get_folder_id',
+'get_files_for_clause',
+'get_files_in_folder']
 
 def download_drive_files_docx(file_ids, filename_base, export_to_docx=False):
   if isinstance(file_ids, str):
@@ -16,6 +20,7 @@ def download_drive_files_docx(file_ids, filename_base, export_to_docx=False):
   done_files = []
   for idx, file_id in enumerate(file_ids):
     the_file = DAFile()
+    the_file.gdrive_file_id = file_id
     the_file.set_random_instance_name()
     the_file.initialize(filename=f'{filename_base}_{idx}.docx')
     with open(the_file.path(), 'wb') as fh:
