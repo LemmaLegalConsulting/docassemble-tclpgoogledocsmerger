@@ -176,14 +176,7 @@ subquestion: |
 
   ${ filled_template['final'] }
        
-  % endif
-  
-  % for c_object in all_clause_objects:
-  % for c_file in c_object.files:
-  { mammoth.convert_to_markdown(c_file.path()).value }
-  % endfor
-  % endfor
-  
+  % endif  
 ---
 attachment:
   variable name: filled_template[i]
