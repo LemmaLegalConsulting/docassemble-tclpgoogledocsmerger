@@ -1,4 +1,7 @@
 ---
+imports:
+  - mammoth
+---
 features:
   css: bootstrap-multiselect.min.css
   javascript: bootstrap-multiselect.min.js
@@ -140,15 +143,24 @@ id: grab documents
 code: |
   all_clause_ids = []
   all_clauses = []
+  all_clause_objects = []
   selected_rows = multi_index.get_full_rows(row_ids) 
   for row in selected_rows.iterrows():
+    these_ids = []
     g_files = get_files_for_clause(all_files, row[1]["Child's name"])
     if g_files:
       all_clauses.append(row[1]["Child's name"])
     for g_file in g_files:
       if 'id' in g_file:
+        these_ids.append(g_file.get('id'))
         all_clause_ids.append(g_file.get('id'))
-  all_clause_docs2 = download_drive_files_docx(all_clause_ids, 'doc_')
+    if g_files:
+      all_clause_objects.append(DAObject(
+        name=row[1]["Child's name"],
+        files=download_drive_files_docx(these_ids, 'doc_')
+      ))
+  # all_clause_docs2 = download_drive_files_docx(all_clause_ids, 'doc_')
+  
   grab_documents = True
 ---
 id: download filled
@@ -163,12 +175,8 @@ subquestion: |
   % if all_clauses:
 
   ${ filled_template['final'] }
-     
-  % for clause_doc in all_clause_docs2:
-  * ${ clause_doc }
-  % endfor
-  
-  % endif
+       
+  % endif  
 ---
 attachment:
   variable name: filled_template[i]
@@ -176,3 +184,4 @@ attachment:
   filename: requested_clauses
   skip undefined: True
   docx template file: ClausesTemplate.docx
+  update references: True
