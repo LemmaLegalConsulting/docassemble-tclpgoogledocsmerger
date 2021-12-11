@@ -57,9 +57,10 @@ code: |
 ---
 id: search variables
 question: |
-  What do you want to search?
+  Build a custom climate clause document
 subquestion: |
-  Select the attributes you want in your clauses
+  Use the search options to create your own custom document with climate-friendly terms you 
+  can use in your contracts.
 fields:
   - Industry: industry_type
     datatype: multiselect
@@ -91,6 +92,20 @@ fields:
     required: False
     code: |
       timeline_sub_types
+  - no label: accept_gdpr_notice
+    datatype: checkboxes
+    choices:
+      - I have read and understand the [data privacy policy](https://www.example.com)
+    minlength: 1
+    none of the above: False
+    validation messages:
+      minlength: |
+        You need to accept the data privacy policy to continue.
+validation code: |
+  if not industry_type.any_true() or nz_scope.any_true() or cop_26.any_true() or industry_group.any_true() or timeline_type.any_true() or timeline_sub_type.any_true():
+    validation_error("You need to search for at least one thing")
+  # TODO: do we really want to require a search term, or should no limits return
+  # everything? currently getting a StopIteration error without this code though
 script: |
   <script type="text/javascript">
       $(document).ready(function() {
