@@ -1,6 +1,7 @@
 ---
 imports:
   - mammoth
+  - base64
 ---
 features:
   css: bootstrap-multiselect.min.css
@@ -12,7 +13,7 @@ metadata:
   short title: Search
 ---
 modules:
-  - .test
+  - .drive_connection
   - .data
 ---
 features:
@@ -21,15 +22,24 @@ features:
   # https://davidstutz.github.io/bootstrap-multiselect/#getting-started
 ---
 code: |
-  selectable_columns = [
-    "GIC Industry",
-    'GIC Industry Group',
-    'COP26 Net Zero Chapter',
-    "NZ Scopes Field",
-    'Timeline Main Phase',
-    'Timeline Sub-Phase',
-    'Practice Area'
+  selectable_column_info = [
+    ('GIC Industry', 'GIC Industry', ''),
+    ('GIC Industry Group', 'GIC Industry Group', ''),
+    ('COP26 Net Zero Chapter', 'COP26 Net Zero Chapter', ''),
+    ('Practice Area', 'Practice Area', ''),
+    ('F - Corp Gov', 'Corporate governance', ''),
+    ('F - Contract Emissions', 'Contract emissions', ''),
+    ('F - Organisation emissions', 'Organisation emissions', ''),
+    ('F - Reporting & Disclosures', 'Reporting & Disclosures', ''),
+    ('F - Corporate Mechanisms', 'Corporate Mechanisms', ''),
+    ('F - Incentives, Enforcement, Disputes', 'Incentives, Enforcement, Disputes', ''),
+    ('F - Other environmental function', 'Other environmental function', ''),
+    ('F - Pre-contract', 'Pre-contract', ''),
+    ('F - Just Transition', 'Just Transition', ''),
+    ('F - Resilience & Adaptation', 'Resillence & Adaptation', ''),
+    ('F - Biodiversity', 'Biodiversity', ''),
   ]
+  selectable_columns = [a for a, _, _ in selectable_column_info]
 ---
 objects: 
   - template_file: DAFile
@@ -42,17 +52,19 @@ objects:
 id: Main order block
 mandatory: True
 code: |
-  industry_type
+  accept_gdpr_notice
   grab_documents
   download_filled
 ---
 code: |
-  airtable_industry_types = multi_index.get_values('GIC Industry')
-  nz_scope_types = multi_index.get_values('NZ Scopes Field')
-  cop_26_priority_types = multi_index.get_values('COP26 Net Zero Chapter')
-  gic_industry_group_types = multi_index.get_values('GIC Industry Group')
-  timeline_main_types = multi_index.get_values('Timeline Main Phase')
-  timeline_sub_types = multi_index.get_values('Timeline Sub-Phase')
+  selectable_fields = []
+  all_types = {}
+  selected_type = {}
+  for col, label, _ in selectable_column_info:
+    all_types[col] = multi_index.get_values(col)
+    selectable_fields.append(
+        {'label': label, 'field': f'selected_type["{col}"]', 'datatype': 'multiselect', 
+         'required': False, 'code': f'all_types["{col}"]'})
 ---
 code: |
   full_clauses_folder_id = "1YDT_u4AJMzwJKNcAH2naYHhycNd-iHvt"
@@ -65,36 +77,7 @@ subquestion: |
   Use the search options to create your own custom document with climate-friendly terms you 
   can use in your contracts.
 fields:
-  - Industry: industry_type
-    datatype: multiselect
-    required: False
-    code: |
-      airtable_industry_types
-  - NZ Scope: nz_scope
-    datatype: multiselect
-    required: False
-    code: |
-      nz_scope_types
-  - Cop 26 Chapter: cop_26
-    datatype: multiselect
-    required: False
-    code: |
-      cop_26_priority_types
-  - GIC Industry Group: industry_group
-    datatype: multiselect
-    required: False
-    code: |
-      gic_industry_group_types
-  - Timeline (Main): timeline_type
-    datatype: multiselect
-    required: False
-    code: |
-      timeline_main_types
-  - Timeline (Sub): timeline_sub_type
-    datatype: multiselect
-    required: False
-    code: |
-      timeline_sub_types
+  - code: selectable_fields
   - no label: accept_gdpr_notice
     datatype: checkboxes
     choices:
@@ -105,32 +88,49 @@ fields:
       minlength: |
         You need to accept the data privacy policy to continue.
 validation code: |
-  if not industry_type.any_true() or nz_scope.any_true() or cop_26.any_true() or industry_group.any_true() or timeline_type.any_true() or timeline_sub_type.any_true():
+   indiv_any_trues = [a_type.any_true() for a_type in selected_type.values()]
+   if not any(indiv_any_trues):
     validation_error("You need to search for at least one thing")
   # TODO: do we really want to require a search term, or should no limits return
   # everything? currently getting a StopIteration error without this code though
 script: |
   <script type="text/javascript">
       $(document).ready(function() {
-          $('#aW5kdXN0cnlfdHlwZQ').multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true});
-          $('#bnpfc2NvcGU').multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true});
-          $('#Y29wXzI2').multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true});
-          $('#aW5kdXN0cnlfZ3JvdXA').multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true});
-          $('#dGltZWxpbmVfdHlwZQ').multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true});       
-          $('#dGltZWxpbmVfc3ViX3R5cGU').multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true});       
+          % for col_name in selectable_columns:
+          $("#${ base64.b64encode(str('selected_type["' + col_name + '"]').encode()).decode().replace('=', '') } ").multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true});
+          % endfor
       });
   </script>      
+---
+comment: |
+  - Corporate Governance: use_coporate_governance
+    datatype: yesnowide
+  - Contract emissions: use_contract_emissions
+    datatype: yesnowide
+  - Organization emissions: use_organization_emissions
+    datatype: yesnowide
+  - Reporting & Disclosures: use_reporting_and_disclosures
+    datatype: yesnowide
+  - Corporate Mechanisms: use_roporate_mechanisms
+    datatype: yesnowide
+  - Incentives, Enforcement, Disputes: use_incentives
+    datatype: yesnowide
+  - Other environmental function: use_other_environmental_function
+    datatype: yesnowide
+  - Pre-contract: use_pre_contract
+    datatype: yesnowide
+  - Just Transition: use_just_transition
+    datatype: yesnowide
+  - Resillience & Adaptiation: use_resillience
+    datatype: yesnowide
+  - Biodiversity: use_biodiversity
+    datatype: yesnowide
 ---
 id: select rows
 code: |
   query_list = []
-  for col_name, col_vals in [
-        ('GIC Industry', industry_type), 
-        ('NZ Scopes Field', nz_scope), 
-        ('COP26 Net Zero Chapter', cop_26),
-        ('Timeline Main Phase', timeline_type),
-        ('Timeline Sub-Phase', timeline_sub_type),
-        ('GIC Industry Group', industry_group)]:
+  for col_name in selectable_columns:
+    col_vals = selected_type[col_name]
     if isinstance(col_vals, DADict):
       if col_vals.any_true():
         query_list.append([col_name, col_vals.true_values()])
@@ -173,6 +173,13 @@ question: |
   % endif
 subquestion: |
   % if all_clauses:
+  
+  We found several clauses that matched your query:
+  
+  % for row in selected_rows.iterrows():
+  * ${ row[1].get("Full name", row[1].get("Child's name", '')) }
+  
+  % endfor
 
   ${ filled_template['final'] }
        

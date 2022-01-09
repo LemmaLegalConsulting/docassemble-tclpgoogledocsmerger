@@ -1,13 +1,13 @@
 metadata:
   title: Default playground interview
-  short title: Test
-  comment: This is a learning tool.  Feel free to write over it.
+  short title: Testing Drive
+  comment: This is a learning tool
 ---
 objects:
   - client: Individual
 ---
 modules:
-  - .test
+  - .drive_connection
 ---
 objects: 
   - template_file: DAFile

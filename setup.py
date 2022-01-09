@@ -53,7 +53,7 @@ setup(name='docassemble.tclpgoogledocsmerger',
       url='https://docassemble.org',
       packages=find_packages(),
       namespace_packages=['docassemble'],
-      install_requires=['airtable-python-wrapper>=0.15.2', 'google-api-python-client>=2.33.0', 'numpy>=1.0.4', 'pandas>=1.2.4'],
+      install_requires=['airtable-python-wrapper>=0.15.2', 'google-api-python-client>=2.15.0', 'mammoth>=1.4.18', 'numpy>=1.0.4', 'pandas>=1.2.4'],
       zip_safe=False,
       package_data=find_package_data(where='docassemble/tclpgoogledocsmerger/', package='docassemble.tclpgoogledocsmerger'),
      )

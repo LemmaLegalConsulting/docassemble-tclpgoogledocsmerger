@@ -58,12 +58,20 @@ class MultiSelectIndex(DAObject):
             # Clean data in columns with list entries with commas in the strings
             "Practice Area": split_and_strip, 
             "COP26 Net Zero Chapter": split_and_strip, 
-            "Timeline Sub-Phase": split_and_strip, 
             # Split the comma separated lists into actual lists
             "GIC Industry": split_and_strip,
             "GIC Industry Group": split_and_strip,
-            "Timeline Main Phase": split_and_strip,
-            "NZ Scopes Field": split_and_strip
+            "F - Contract Emissions": split_and_strip,
+            "F - Corp Gov": split_and_strip,
+            "F - Reporting & Disclosures": split_and_strip,
+            "F - Corporate Mechanisms": split_and_strip,
+            "F - Organisation emissions": split_and_strip,
+            "F - Incentives, Enforcement, Disputes": split_and_strip,
+            "F - Other environmental function": split_and_strip,
+            "F - Pre-contract": split_and_strip,
+            "F - Just Transition": split_and_strip,
+            "F - Resilience & Adaptation": split_and_strip,
+            "F - Biodiversity": split_and_strip
         })
   
     self.indices = create_indices(self.table, cols_with_indices, id_col="Child's name")
