@@ -37,5 +37,6 @@ subquestion: |
   ### Clauses 2
   % for cl in clauses2:
   * ${ cl }
+      * ${ format_datetime(cl.get('modifiedTime', '')) }
   % endfor
 continue button field: testing

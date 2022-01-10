@@ -12,6 +12,7 @@ __all__ = ['word_to_markdown',
            'get_files_in_folder']
 
 def download_drive_files_docx(file_ids:Union[str, List[str]], filename_base:str, export_to_docx:bool=False):
+  """Downloads a list of files from google Drive, either as GDocs converted to DOCX, or directly as DOCX"""
   if isinstance(file_ids, str):
     file_ids = [file_ids]
       
@@ -65,6 +66,7 @@ def get_files_for_clause(all_files, childs_name:str) -> List[str]:
   return to_return
 
 def get_files_in_folder(folder_name:str=None, folder_id:str=None):
+  """Given a folder, get information about all of the files in that folder."""
   if folder_name is None and folder_id is None:
     raise Exception("Need to provide a folder name or an ID, you provided neither")
   if folder_id is None:
@@ -76,8 +78,9 @@ def get_files_in_folder(folder_name:str=None, folder_id:str=None):
   page_token = None
   try:
     while True:
+      # More metadata about the files in https://developers.google.com/drive/api/v3/reference/files
       response = service.files().list(spaces="drive", 
-          fields="nextPageToken, files(id, name)", 
+          fields="nextPageToken, files(id, name, modifiedTime)", 
           q=f"trashed=false and '{folder_id}' in parents",
           pageToken=page_token).execute()
       for the_file in response.get('files', []):
