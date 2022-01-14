@@ -185,8 +185,9 @@ code: |
   prep_documents = True
 ---
 code: |
+  # TODO(brycew): ADDING A MIDDLE SCREEN BREAKS EVERYTIHNG: ARGH
   for obj in all_clause_objects:
-    obj.files = download_drive_files_docx(these_ids, 'doc_')
+    obj.files = download_drive_files_docx(obj.file_ids, 'doc_')
   grab_documents = True
 ---
 id: Review before downloading
