@@ -57,11 +57,12 @@ def get_folder_id(folder_name) -> str:
   return folder_id
 
 def get_files_for_clause(all_files, childs_name:str) -> List[str]:
-  name_to_check = childs_name.replace("'", '_').replace('’', '_').lower()
+  child_to_check = childs_name.replace("'", '_').replace('’', '_').lower()
   to_return = []
   for g_file in all_files:
     file_name = g_file.get('name', '')
-    if file_name.lower().startswith(name_to_check) and 'Clause Amendment History' not in file_name:
+    file_to_check = file_name.replace("'", "_").replace('’', '_').lower()
+    if file_to_check.lower().startswith(child_to_check) and 'Clause Amendment History' not in file_to_check:
       to_return.append(g_file)
   return to_return
 

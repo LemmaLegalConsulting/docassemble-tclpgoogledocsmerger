@@ -82,8 +82,12 @@ class MultiSelectIndex(DAObject):
     rows_per_col = {}
     for col_name, col_vals in col_values:
       rows_for_col = set()
-      for col_val in col_vals:
-        rows_for_col = rows_for_col.union(self.indices[col_name].get(col_val, []))
+      if col_vals is None:
+        for elems in self.indices[col_name].values():
+          rows_for_col = rows_for_col.union(elems)
+      else:
+        for col_val in col_vals:
+          rows_for_col = rows_for_col.union(self.indices[col_name].get(col_val, []))
       rows_per_col[col_name] = rows_for_col
 
     # Get only the row ids that match all of the column queries

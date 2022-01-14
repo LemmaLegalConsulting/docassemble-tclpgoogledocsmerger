@@ -23,23 +23,24 @@ features:
 ---
 code: |
   selectable_column_info = [
-    ('GIC Industry', 'GIC Industry', 'https://en.wikipedia.org/wiki/Global_Industry_Classification_Standard'),
-    ('GIC Industry Group', 'GIC Industry Group', 'https://en.wikipedia.org/wiki/Global_Industry_Classification_Standard'),
-    ('COP26 Net Zero Chapter', 'COP26 Net Zero Chapter', ''),
-    ('Practice Area', 'Practice Area', ''),
-    ('F - Corp Gov', 'Corporate governance', ''),
-    ('F - Contract Emissions', 'Contract emissions', ''),
-    ('F - Organisation emissions', 'Organisation emissions', ''),
-    ('F - Reporting & Disclosures', 'Reporting & Disclosures', ''),
-    ('F - Corporate Mechanisms', 'Corporate Mechanisms', ''),
-    ('F - Incentives, Enforcement, Disputes', 'Incentives, Enforcement, Disputes', ''),
-    ('F - Other environmental function', 'Other environmental func.', ''),
-    ('F - Pre-contract', 'Pre-contract', ''),
-    ('F - Just Transition', 'Just Transition', ''),
-    ('F - Resilience & Adaptation', 'Resillence & Adaptation', ''),
-    ('F - Biodiversity', 'Biodiversity', ''),
+    ('GIC Industry', 'GIC Industry', 'https://en.wikipedia.org/wiki/Global_Industry_Classification_Standard', False),
+    ('GIC Industry Group', 'GIC Industry Group', 'https://en.wikipedia.org/wiki/Global_Industry_Classification_Standard', False),
+    ('COP26 Net Zero Chapter', 'COP26 Net Zero Chapter', '', False),
+    ('Practice Area', 'Practice Area', '', False),
+    ('F - Corp Gov', 'Corporate governance', '', True),
+    ('F - Contract Emissions', 'Contract emissions', '', True),
+    ('F - Organisation emissions', 'Organisation emissions', '', True),
+    ('F - Reporting & Disclosures', 'Reporting & Disclosures', '', True),
+    ('F - Corporate Mechanisms', 'Corporate Mechanisms', '', True),
+    ('F - Incentives, Enforcement, Disputes', 'Incentives, Enforcement, Disputes', '', True),
+    ('F - Other environmental function', 'Other environmental func.', '', True),
+    ('F - Pre-contract', 'Pre-contract', '', True),
+    ('F - Just Transition', 'Just Transition', '', True),
+    ('F - Resilience & Adaptation', 'Resillence & Adaptation', '', True),
+    ('F - Biodiversity', 'Biodiversity', '', True),
   ]
-  selectable_columns = [a for a, _, _ in selectable_column_info]
+  selectable_columns = [a for a, _, _, _ in selectable_column_info]
+  all_fields = selectable_columns # + ['top_level_' + a for a, _, _, top_level in selectable_column_info if top_level]
 ---
 objects: 
   - template_file: DAFile
@@ -53,6 +54,8 @@ id: Main order block
 mandatory: True
 code: |
   accept_gdpr_notice
+  prep_documents
+  review_before_download
   grab_documents
   download_filled
 ---
@@ -60,16 +63,23 @@ code: |
   selectable_fields = []
   all_types = {}
   selected_type = {}
-  for col, label, help_link in selectable_column_info:
+  for col, label, help_link, is_top_level in selectable_column_info:
     all_types[col] = multi_index.get_values(col)
+    #if is_top_level:
+    #  top_level_var = "top_level_" + col
+    #  selectable_fields.append(
+    #          {'label': 'any ' + label, 'field': f'selected_type["{top_level_var}"]',
+    #           'datatype': 'yesno', 'required': False})
     selectable_fields.append(
           {'label': label, 'field': f'selected_type["{col}"]', 'datatype': 'multiselect', 
            'required': False, 'code': f'all_types["{col}"]'})
+    #if is_top_level:
+    #  selectable_fields[-1]['show if'] = f'selected_type["{top_level_var}"]'
     if help_link:
       selectable_fields[-1]['help'] = f'[More info here]({help_link})'
 ---
 code: |
-  full_clauses_folder_id = "1YDT_u4AJMzwJKNcAH2naYHhycNd-iHvt"
+  full_clauses_folder_id =  "1YDT_u4AJMzwJKNcAH2naYHhycNd-iHvt"
   all_files = get_files_in_folder(folder_id=full_clauses_folder_id)
 ---
 id: search variables
@@ -90,7 +100,7 @@ fields:
       minlength: |
         You need to accept the data privacy policy to continue.
 validation code: |
-   indiv_any_trues = [a_type.any_true() for a_type in selected_type.values()]
+   indiv_any_trues = [bool(a_type) and (not isinstance(a_type, list) or a_type.any_true()) for a_type in selected_type.values()]
    if not any(indiv_any_trues):
     validation_error("You need to search for at least one thing")
   # TODO: do we really want to require a search term, or should no limits return
@@ -131,11 +141,13 @@ comment: |
 id: select rows
 code: |
   query_list = []
-  for col_name in selectable_columns:
-    col_vals = selected_type[col_name]
+  for col_name in all_fields:
+    col_vals = selected_type.get(col_name)
     if isinstance(col_vals, DADict):
       if col_vals.any_true():
         query_list.append([col_name, col_vals.true_values()])
+    elif isinstance(col_vals, bool):
+      query_list.append([col_name])
     elif col_vals != "":
       query_list.append((col_name, [col_vals]))
   row_ids = multi_index.query(query_list)
@@ -167,11 +179,39 @@ code: |
         modified_time=modified_time,
         url=url,
         docx_link=f'[{full_name}]({url})',
-        files=download_drive_files_docx(these_ids, 'doc_')
+        file_ids=these_ids
       ))
   # all_clause_docs2 = download_drive_files_docx(all_clause_ids, 'doc_')
-  xyzabc = mammoth.convert_to_markdown(all_clause_objects[0].files[0].path()).value
+  prep_documents = True
+---
+code: |
+  for obj in all_clause_objects:
+    obj.files = download_drive_files_docx(these_ids, 'doc_')
   grab_documents = True
+---
+id: Review before downloading
+question: |
+  % if all_clauses:
+  Review your clauses
+  % else:
+  No matching clauses found.
+  % endif
+subquestion: |
+  % if all_clauses:
+
+  Here is more about the individual clauses that we found.
+  
+  % for obj in all_clause_objects:
+  * [${ obj.name }: ${ obj.full_name }](${obj.url})
+      * Last modified at ${ format_datetime(obj.modified_time) }
+  % endfor
+
+  % else:
+  
+  We couldn't find anything that matched all of the attributes that you searched for. Try reducing the number of attributes.
+  
+  % endif
+continue button field: review_before_download
 ---
 id: download filled
 event: download_filled
@@ -181,17 +221,18 @@ question: |
   % else:
   No matching clauses found.
   % endif
+comment: |
+  Download the [combined document with all of the found clauses](${ filled_template['final'].url_for() }).
 subquestion: |
   % if all_clauses:
   
-  Download the [combined document with all of the found clauses](${ filled_template['final'].url_for() }).
+  ${ filled_template['final'] }
   
   Here is more about the individual clauses that we found.
   
   % for obj in all_clause_objects:
   * [${ obj.name }: ${ obj.full_name }](${obj.url})
       * Last modified at ${ format_datetime(obj.modified_time) }
-      *  mammoth.convert_to_markdown(obj.files[0].path()).value
   % endfor
 
   % else:
