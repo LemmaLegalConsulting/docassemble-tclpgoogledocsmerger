@@ -84,6 +84,17 @@ code: |
   stuff_to_snapshot = {
      'start_time': str(start_time().format('yyyy-MM-dd')),
      }    
+  # Get location
+  try:
+    import requests
+    response = requests.get(f"https://geolocation-db.com/json/{device(ip=True)}&position=true").json()
+    stuff_to_snapshot['country'] = response.get('country_code')
+    stuff_to_snapshot['state'] = response.get('state')
+    stuff_to_snapshot['city'] = response.get('city')
+    stuff_to_snapshot['latitude'] = response.get('latitude')
+    stuff_to_snapshot['longitude'] = response.get('longitude')
+  except:
+    stuff_to_snapshot['country'] = 'UNKNOWN'
   # Don't let DA parse nameerrors so that all data is recorded in one block,
   # regardless of how far in interview someone got
   try:  
