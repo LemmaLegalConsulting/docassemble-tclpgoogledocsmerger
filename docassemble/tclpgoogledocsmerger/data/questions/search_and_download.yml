@@ -16,11 +16,6 @@ modules:
   - .drive_connection
   - .data
 ---
-features:
-  css: bootstrap-multiselect.min.css
-  javascript: bootstrap-multiselect.min.js
-  # https://davidstutz.github.io/bootstrap-multiselect/#getting-started
----
 code: |
   selectable_column_info = [
     ('GIC Industry', 'GIC Industry', 'https://en.wikipedia.org/wiki/Global_Industry_Classification_Standard', False),
@@ -43,7 +38,6 @@ code: |
   all_fields = selectable_columns # + ['top_level_' + a for a, _, _, top_level in selectable_column_info if top_level]
 ---
 objects: 
-  - template_file: DAFile
   - filled_template: DADict
   - multi_index: MultiSelectIndex.using(import_path=static_file.path(), cols_with_indices=selectable_columns)
 ---
@@ -55,9 +49,12 @@ mandatory: True
 code: |
   accept_gdpr_notice
   prep_documents
+  the_download_task
   review_before_download
-  grab_documents
-  download_filled
+  if the_download_task.ready() and the_assembly_task.ready():
+    download_filled
+  else:
+    waiting_screen
 ---
 code: |
   selectable_fields = []
@@ -153,7 +150,7 @@ code: |
   row_ids = multi_index.query(query_list)
   #del query_list
 ---
-id: grab documents
+id: prep documents
 code: |
   url_base_str = 'https://chancerylaneproject.org/climate-clauses/{}'
   all_clause_ids = []
@@ -185,10 +182,34 @@ code: |
   prep_documents = True
 ---
 code: |
-  # TODO(brycew): ADDING A MIDDLE SCREEN BREAKS EVERYTIHNG: ARGH
-  for obj in all_clause_objects:
+  the_download_task = background_action('download_task', all_clauses=all_clause_objects)
+---
+code: |
+  the_assembly_task = background_action('assemble_task', all_clauses=all_clause_objects)
+---
+event: download_task
+code: |
+  all_clauses = action_argument('all_clauses')
+  for obj in all_clauses:
     obj.files = download_drive_files_docx(obj.file_ids, 'doc_')
-  grab_documents = True
+  filled_template['final']
+  background_response_action('download_resp', new_clauses=all_clauses)
+---
+event: download_resp
+code: |
+  all_clause_objects = action_argument('new_clauses')
+  background_response()
+---
+event: assemble_task
+code: |
+  all_clause_objects = action_argument('all_clauses')
+  filled_template['final']
+  background_response_action('assemble_resp', the_doc=filled_template['final'])
+---
+event: assemble_resp
+code: |
+  the_doc = action_argument('the_doc')
+  background_response()
 ---
 id: Review before downloading
 question: |
@@ -214,6 +235,14 @@ subquestion: |
   % endif
 continue button field: review_before_download
 ---
+event: waiting_screen
+id: waiting screen
+question: |
+  We're assembling your documents now
+subquestion: |
+  Hang tight, we'll refresh this page when your document is ready.
+reload: True
+---
 id: download filled
 event: download_filled
 question: |
@@ -223,11 +252,11 @@ question: |
   No matching clauses found.
   % endif
 comment: |
-  Download the [combined document with all of the found clauses](${ filled_template['final'].url_for() }).
+  Download the [combined document with all of the found clauses](${ the_doc.url_for() }).
 subquestion: |
   % if all_clauses:
   
-  ${ filled_template['final'] }
+  [:file-download: Download](${the_doc.url_for(attachment=True)})
   
   Here is more about the individual clauses that we found.
   
