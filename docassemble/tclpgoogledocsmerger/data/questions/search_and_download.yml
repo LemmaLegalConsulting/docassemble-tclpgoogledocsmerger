@@ -24,8 +24,8 @@ features:
 code: |
   selectable_column_info = [
     ('GIC Industry', 'GIC Industry', 'https://en.wikipedia.org/wiki/Global_Industry_Classification_Standard', False),
-    ('GIC Industry Group', 'GIC Industry Group', 'https://en.wikipedia.org/wiki/Global_Industry_Classification_Standard', False),
-    ('COP26 Net Zero Chapter', 'COP26 Net Zero Chapter', '', False),
+    #('GIC Industry Group', 'GIC Industry Group', 'https://en.wikipedia.org/wiki/Global_Industry_Classification_Standard', False),
+    #('COP26 Net Zero Chapter', 'COP26 Net Zero Chapter', '', False),
     ('Practice Area', 'Practice Area', '', False),
     ('F - Corp Gov', 'Corporate governance', '', True),
     ('F - Contract Emissions', 'Contract emissions', '', True),
