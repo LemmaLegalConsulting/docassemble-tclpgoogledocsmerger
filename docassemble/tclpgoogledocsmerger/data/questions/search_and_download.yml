@@ -47,11 +47,15 @@ objects:
 id: Main order block
 mandatory: True
 code: |
+  snapshot_interview_state
   accept_gdpr_notice
+  reconsider('snapshot_interview_state')
   prep_documents
   the_download_task
   review_before_download
   if the_download_task.ready() and the_assembly_task.ready():
+    reached_download_screen = True
+    reconsider('snapshot_interview_state')
     download_filled
   else:
     waiting_screen
@@ -74,6 +78,30 @@ code: |
     #  selectable_fields[-1]['show if'] = f'selected_type["{top_level_var}"]'
     if help_link:
       selectable_fields[-1]['help'] = f'[More info here]({help_link})'
+---
+code: |
+  # Take the interesting fields and make them 2 dimensional so easier to view in XLSX
+  stuff_to_snapshot = {
+     'start_time': str(start_time().format('yyyy-MM-dd')),
+     }    
+  # Don't let DA parse nameerrors so that all data is recorded in one block,
+  # regardless of how far in interview someone got
+  try:  
+    stuff_to_snapshot['all_clauses'] = comma_list(all_clauses)
+    stuff_to_snapshot['all_clauses_full_names'] = comma_list(f'"{clause.full_name}"' for clause in all_clause_objects)
+    if defined('selected_type'):
+      for column in selected_type:
+        if selected_type[column].any_true():
+          stuff_to_snapshot[f"column_{column}"] = comma_list(selected_type[column].true_values())
+  except:
+    pass
+    
+  if defined('reached_download_screen'):
+    stuff_to_snapshot['reached_download_screen'] = True
+  store_variables_snapshot(
+      data=stuff_to_snapshot, persistent=True
+     )
+  snapshot_interview_state = True
 ---
 code: |
   full_clauses_folder_id =  "1YDT_u4AJMzwJKNcAH2naYHhycNd-iHvt"
@@ -257,7 +285,7 @@ subquestion: |
   % if all_clauses:
   
   [:file-download: Download](${the_doc.url_for(attachment=True)})
-  
+
   Here is more about the individual clauses that we found.
   
   % for obj in all_clause_objects:
