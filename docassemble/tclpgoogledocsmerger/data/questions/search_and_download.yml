@@ -87,19 +87,20 @@ code: |
   # Get location
   try:
     import requests
-    response = requests.get(f"https://geolocation-db.com/json/{device(ip=True)}&position=true").json()
-    stuff_to_snapshot['country'] = response.get('country_code')
-    stuff_to_snapshot['state'] = response.get('state')
-    stuff_to_snapshot['city'] = response.get('city')
-    stuff_to_snapshot['latitude'] = response.get('latitude')
-    stuff_to_snapshot['longitude'] = response.get('longitude')
+    resp = requests.get(f"https://geolocation-db.com/json/{device(ip=True)}&position=true").json()
+    stuff_to_snapshot['country'] = resp.get('country_code')
+    stuff_to_snapshot['state'] = resp.get('state')
+    stuff_to_snapshot['city'] = resp.get('city')
+    stuff_to_snapshot['latitude'] = round(resp['latitude'] * 100) / 100 if 'latitude' in resp else None
+    stuff_to_snapshot['longitude'] = round(resp['longitude'] * 100) / 100 if 'longitude' in resp else None
   except:
     stuff_to_snapshot['country'] = 'UNKNOWN'
   # Don't let DA parse nameerrors so that all data is recorded in one block,
   # regardless of how far in interview someone got
-  try:  
+  try:
     stuff_to_snapshot['all_clauses'] = comma_list(all_clauses)
     stuff_to_snapshot['all_clauses_full_names'] = comma_list(f'"{clause.full_name}"' for clause in all_clause_objects)
+    stuff_to_snapshot['selected_rows'] = comma_list([row[1]["Child's name"] for row in selected_rows.iterrows()])
     if defined('selected_type'):
       for column in selected_type:
         if selected_type[column].any_true():
@@ -107,8 +108,7 @@ code: |
   except:
     pass
     
-  if defined('reached_download_screen'):
-    stuff_to_snapshot['reached_download_screen'] = True
+  stuff_to_snapshot['reached_download_screen'] = defined('reached_download_screen')
   store_variables_snapshot(
       data=stuff_to_snapshot, persistent=True
      )
