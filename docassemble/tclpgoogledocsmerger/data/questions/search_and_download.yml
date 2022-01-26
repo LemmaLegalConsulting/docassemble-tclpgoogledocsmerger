@@ -74,17 +74,18 @@ code: |
     #          {'label': 'any ' + label, 'field': f'selected_type["{top_level_var}"]',
     #           'datatype': 'yesno', 'required': False})
     selectable_fields.append(
-          {'label': label, 'field': f'selected_type["{col}"]', 'datatype': 'ourmultiselect', 
-           'required': False, 'code_options': f'all_types["{col}"]'})
+          {'label': label, 'field': f'selected_type["{col}"]', 'datatype': 'multiselect', 
+           'required': False, 'code': f'all_types["{col}"]'})
     #if is_top_level:
     #  selectable_fields[-1]['show if'] = f'selected_type["{top_level_var}"]'
     if help_link:
       selectable_fields[-1]['help'] = f'[More info here]({help_link})'
 
-  single_selectable_type = []
+  single_selectable_type = {}
   all_combined_types = []
   for col, label, help_link, is_top_level in combined_field:
-    all_combined_types.extend(multi_index.get_values(col))
+    all_vals = [{'value': item, 'label': item, 'group': label} for item in multi_index.get_values(col)]
+    all_combined_types.extend(all_vals)
   
   selectable_fields.append(
         {'label': 'Functions', 'field': f'single_selectable_type', 
@@ -153,14 +154,15 @@ validation code: |
     validation_error("You need to search for at least one thing")
   # TODO: do we really want to require a search term, or should no limits return
   # everything? currently getting a StopIteration error without this code though
-#script: |
-#  <script type="text/javascript">
-#      $(document).ready(function() {
-#          % for col_name in selectable_columns:
-#          $("#${ base64.b64encode(str('selected_type["' + col_name + #'"]').encode()).decode().replace('=', '') } ").multiselect({enableCaseInsensitiveFiltering: #true, inheritClass: true});
-#          % endfor
-#      });
-#  </script>      
+script: |
+  <script type="text/javascript">
+      $(document).ready(function() {
+          % for col_name in selectable_columns:
+          $("#${ base64.b64encode(str('selected_type["' + col_name + '"]').encode()).decode().replace('=', '') } ").multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true, enableClickableOptGroups: true, enableCollapsibleOptGroups: true, collapseOptGroupsByDefault: true});
+          % endfor
+          $("#${ base64.b64encode('single_selectable_type'.encode()).decode().replace('=', '') } ").multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true, enableClickableOptGroups: true, enableCollapsibleOptGroups: true, collapseOptGroupsByDefault: true});
+      });
+  </script>      
 ---
 comment: |
   - Corporate Governance: use_coporate_governance
