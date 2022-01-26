@@ -22,6 +22,8 @@ code: |
     #('GIC Industry Group', 'GIC Industry Group', 'https://en.wikipedia.org/wiki/Global_Industry_Classification_Standard', False),
     #('COP26 Net Zero Chapter', 'COP26 Net Zero Chapter', '', False),
     ('Practice Area', 'Practice Area', '', False),
+  ]
+  combined_field = [
     ('F - Corp Gov', 'Corporate governance', '', True),
     ('F - Contract Emissions', 'Contract emissions', '', True),
     ('F - Organisation emissions', 'Organisation emissions', '', True),
@@ -34,7 +36,7 @@ code: |
     ('F - Resilience & Adaptation', 'Resillence & Adaptation', '', True),
     ('F - Biodiversity', 'Biodiversity', '', True),
   ]
-  selectable_columns = [a for a, _, _, _ in selectable_column_info]
+  selectable_columns = [a for a, _, _, _ in selectable_column_info] + [a for a, _, _, _ in combined_field]
   all_fields = selectable_columns # + ['top_level_' + a for a, _, _, top_level in selectable_column_info if top_level]
 ---
 objects: 
@@ -72,12 +74,22 @@ code: |
     #          {'label': 'any ' + label, 'field': f'selected_type["{top_level_var}"]',
     #           'datatype': 'yesno', 'required': False})
     selectable_fields.append(
-          {'label': label, 'field': f'selected_type["{col}"]', 'datatype': 'multiselect', 
-           'required': False, 'code': f'all_types["{col}"]'})
+          {'label': label, 'field': f'selected_type["{col}"]', 'datatype': 'ourmultiselect', 
+           'required': False, 'code_options': f'all_types["{col}"]'})
     #if is_top_level:
     #  selectable_fields[-1]['show if'] = f'selected_type["{top_level_var}"]'
     if help_link:
       selectable_fields[-1]['help'] = f'[More info here]({help_link})'
+
+  single_selectable_type = []
+  all_combined_types = []
+  for col, label, help_link, is_top_level in combined_field:
+    all_combined_types.extend(multi_index.get_values(col))
+  
+  selectable_fields.append(
+        {'label': 'Functions', 'field': f'single_selectable_type', 
+         'datatype': 'multiselect',
+         'required': False, 'code': 'all_combined_types' })
 ---
 code: |
   # Take the interesting fields and make them 2 dimensional so easier to view in XLSX
@@ -141,14 +153,14 @@ validation code: |
     validation_error("You need to search for at least one thing")
   # TODO: do we really want to require a search term, or should no limits return
   # everything? currently getting a StopIteration error without this code though
-script: |
-  <script type="text/javascript">
-      $(document).ready(function() {
-          % for col_name in selectable_columns:
-          $("#${ base64.b64encode(str('selected_type["' + col_name + '"]').encode()).decode().replace('=', '') } ").multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true});
-          % endfor
-      });
-  </script>      
+#script: |
+#  <script type="text/javascript">
+#      $(document).ready(function() {
+#          % for col_name in selectable_columns:
+#          $("#${ base64.b64encode(str('selected_type["' + col_name + #'"]').encode()).decode().replace('=', '') } ").multiselect({enableCaseInsensitiveFiltering: #true, inheritClass: true});
+#          % endfor
+#      });
+#  </script>      
 ---
 comment: |
   - Corporate Governance: use_coporate_governance
