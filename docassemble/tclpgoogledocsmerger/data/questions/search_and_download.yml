@@ -58,10 +58,17 @@ code: |
     review_before_download
   else:
     no_clauses_found
-  if the_download_task.ready() and the_assembly_task.ready():
-    reached_download_screen = True
-    reconsider('snapshot_interview_state')
-    download_filled
+  if the_download_task.ready():
+    if the_download_task.failed():
+      show_failed_screen
+    if the_assembly_task.ready():
+      if the_assembly_task.failed():
+        show_failed_screen
+      reached_download_screen = True
+      reconsider('snapshot_interview_state')
+      download_filled
+    else:
+      waiting_screen
   else:
     waiting_screen
 ---
@@ -69,7 +76,7 @@ comment: |
   Backup for "the_doc": if something goes wrong in the background task, and
   the_doc isn't created, error out
 code: |
-  the_doc = False
+  the_doc = DAEmpty()
   show_failed_screen
 ---
 event: show_failed_screen
@@ -77,6 +84,8 @@ question: |
   Sorry, something went wrong
 subquestion: |
   We had some trouble trying to assemble your document.
+buttons:
+  - Restart: restart
 ---
 code: |
   select_fields = []
