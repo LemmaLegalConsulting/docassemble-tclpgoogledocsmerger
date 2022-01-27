@@ -45,6 +45,8 @@ comma_outside_quotes = re.compile(r'(?!\B"[^"]*),(?![^"]*"\B)')
 def split_and_strip(list_str):
   return [entry.strip().strip('"') for entry in comma_outside_quotes.split(list_str) if entry.strip()]
 
+ColumnQuery = Tuple[str, List[str]]
+
 class MultiSelectIndex(DAObject):
   def init(self, *pargs, **kwargs):
     super().init(*pargs, **kwargs)
@@ -73,25 +75,25 @@ class MultiSelectIndex(DAObject):
             "F - Resilience & Adaptation": split_and_strip,
             "F - Biodiversity": split_and_strip
         })
-  
     self.indices = create_indices(self.table, cols_with_indices, id_col="Child's name")
   
-  def query(self, col_values:List[Tuple[str, List[str]]]) -> List[str]:
+  def query(self, one_of_each:List[List[ColumnQuery]]) -> List[str]:
     """For each column in the dataset, takes possible values of it. If multiple values are present for one column, rows that match either are taken.
     Then only the intersection of the rows that match all of the column queries are returned."""
-    rows_per_col = {}
-    for col_name, col_vals in col_values:
-      rows_for_col = set()
-      if col_vals is None:
-        for elems in self.indices[col_name].values():
-          rows_for_col = rows_for_col.union(elems)
-      else:
-        for col_val in col_vals:
-          rows_for_col = rows_for_col.union(self.indices[col_name].get(col_val, []))
-      rows_per_col[col_name] = rows_for_col
+    rows_per_query = []
+    for col_queries in one_of_each:
+      rows_for_query = set()
+      for col_name, col_vals in col_queries:
+        if col_vals is None:
+          for rows in self.indices[col_name].values():
+            rows_for_query = rows_for_query.union(rows)
+        else:
+          for col_val in col_vals:
+            rows_for_query = rows_for_query.union(self.indices[col_name].get(col_val, []))
+      rows_per_query.append(rows_for_query)
 
     # Get only the row ids that match all of the column queries
-    return sorted(reduce(lambda a, b: a.intersection(b), rows_per_col.values(), next(iter(rows_per_col.values()))))
+    return sorted(reduce(lambda a, b: a.intersection(b), rows_per_query, next(iter(rows_per_query))))
 
   def get_full_rows(self, row_ids, id_col="Child's name"):
     return self.table[self.table[id_col].isin(row_ids)]

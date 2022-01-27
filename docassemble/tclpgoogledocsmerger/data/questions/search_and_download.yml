@@ -17,13 +17,13 @@ modules:
   - .data
 ---
 code: |
-  selectable_column_info = [
+  separate_column_info = [
     ('GIC Industry', 'GIC Industry', 'https://en.wikipedia.org/wiki/Global_Industry_Classification_Standard', False),
     #('GIC Industry Group', 'GIC Industry Group', 'https://en.wikipedia.org/wiki/Global_Industry_Classification_Standard', False),
     #('COP26 Net Zero Chapter', 'COP26 Net Zero Chapter', '', False),
     ('Practice Area', 'Practice Area', '', False),
   ]
-  combined_field = [
+  combined_column_info = [
     ('F - Corp Gov', 'Corporate governance', '', True),
     ('F - Contract Emissions', 'Contract emissions', '', True),
     ('F - Organisation emissions', 'Organisation emissions', '', True),
@@ -36,8 +36,9 @@ code: |
     ('F - Resilience & Adaptation', 'Resillence & Adaptation', '', True),
     ('F - Biodiversity', 'Biodiversity', '', True),
   ]
-  selectable_columns = [a for a, _, _, _ in selectable_column_info] + [a for a, _, _, _ in combined_field]
-  all_fields = selectable_columns # + ['top_level_' + a for a, _, _, top_level in selectable_column_info if top_level]
+  separate_columns = [a for a, _, _, _ in separate_column_info]
+  combined_columns = [a for a, _, _, _ in combined_column_info]
+  selectable_columns = separate_columns + combined_columns
 ---
 objects: 
   - filled_template: DADict
@@ -62,41 +63,48 @@ code: |
   else:
     waiting_screen
 ---
+comment: |
+  Backup for "the_doc": if something goes wrong in the background task, and
+  the_doc isn't created, error out
 code: |
-  selectable_fields = []
-  all_types = {}
-  selected_type = {}
-  for col, label, help_link, is_top_level in selectable_column_info:
-    all_types[col] = multi_index.get_values(col)
-    #if is_top_level:
-    #  top_level_var = "top_level_" + col
-    #  selectable_fields.append(
-    #          {'label': 'any ' + label, 'field': f'selected_type["{top_level_var}"]',
-    #           'datatype': 'yesno', 'required': False})
-    selectable_fields.append(
-          {'label': label, 'field': f'selected_type["{col}"]', 'datatype': 'multiselect', 
-           'required': False, 'code': f'all_types["{col}"]'})
-    #if is_top_level:
-    #  selectable_fields[-1]['show if'] = f'selected_type["{top_level_var}"]'
+  the_doc = False
+  show_failed_screen
+---
+event: show_failed_screen
+question: |
+  Sorry, something went wrong
+subquestion: |
+  We had some trouble trying to assemble your document.
+---
+code: |
+  select_fields = []
+  vals_for_columns = {}
+  selected_vals = {}
+  for col, label, help_link, is_top_level in separate_column_info:
+    vals_for_columns[col] = multi_index.get_values(col)
+    field_info = {'label': label, 'field': f'selected_vals["{col}"]', 
+                  'datatype': 'multiselect', 
+                  'required': False, 'code': f'vals_for_columns["{col}"]'}
     if help_link:
-      selectable_fields[-1]['help'] = f'[More info here]({help_link})'
+      field_info['help'] = f'[More info here]({help_link})'
+    select_fields.append(field_info)
 
-  single_selectable_type = {}
-  all_combined_types = []
-  for col, label, help_link, is_top_level in combined_field:
-    all_vals = [{'value': item, 'label': item, 'group': label} for item in multi_index.get_values(col)]
-    all_combined_types.extend(all_vals)
+  combined_selected_vals = {}
+  all_combined_vals = []
+  for col, label, help_link, is_top_level in combined_column_info:
+    all_vals = [{'value': f'{col};;;{item}', 'label': item, 'group': label} for item in multi_index.get_values(col)]
+    all_combined_vals.extend(all_vals)
   
-  selectable_fields.append(
-        {'label': 'Functions', 'field': f'single_selectable_type', 
+  select_fields.append(
+        {'label': 'Functions', 'field': f'combined_selected_vals', 
          'datatype': 'multiselect',
-         'required': False, 'code': 'all_combined_types' })
+         'required': False, 'code': 'all_combined_vals' })
 ---
 code: |
   # Take the interesting fields and make them 2 dimensional so easier to view in XLSX
   stuff_to_snapshot = {
      'start_time': str(start_time().format('yyyy-MM-dd')),
-     }    
+     }
   # Get location
   try:
     import requests
@@ -114,10 +122,10 @@ code: |
     stuff_to_snapshot['all_clauses'] = comma_list(all_clauses)
     stuff_to_snapshot['all_clauses_full_names'] = comma_list(f'"{clause.full_name}"' for clause in all_clause_objects)
     stuff_to_snapshot['selected_rows'] = comma_list([row[1]["Child's name"] for row in selected_rows.iterrows()])
-    if defined('selected_type'):
-      for column in selected_type:
-        if selected_type[column].any_true():
-          stuff_to_snapshot[f"column_{column}"] = comma_list(selected_type[column].true_values())
+    if defined('selected_vals'):
+      for column in selected_vals:
+        if selected_vals[column].any_true():
+          stuff_to_snapshot[f"column_{column}"] = comma_list(selected_vals[column].true_values())
   except:
     pass
     
@@ -138,7 +146,7 @@ subquestion: |
   Use the search options to create your own custom document with climate-friendly terms you 
   can use in your contracts.
 fields:
-  - code: selectable_fields
+  - code: select_fields
   - no label: accept_gdpr_notice
     datatype: checkboxes
     choices:
@@ -149,18 +157,18 @@ fields:
       minlength: |
         You need to accept the data privacy policy to continue.
 validation code: |
-   indiv_any_trues = [bool(a_type) and (not isinstance(a_type, list) or a_type.any_true()) for a_type in selected_type.values()]
+   indiv_any_trues = [bool(a_type) and (not isinstance(a_type, list) or a_type.any_true()) for a_type in selected_vals.values()]
    if not any(indiv_any_trues):
     validation_error("You need to search for at least one thing")
   # TODO: do we really want to require a search term, or should no limits return
   # everything? currently getting a StopIteration error without this code though
 script: |
   <script type="text/javascript">
-      $(document).ready(function() {
-          % for col_name in selectable_columns:
-          $("#${ base64.b64encode(str('selected_type["' + col_name + '"]').encode()).decode().replace('=', '') } ").multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true, enableClickableOptGroups: true, enableCollapsibleOptGroups: true, collapseOptGroupsByDefault: true});
+     $(document).ready(function() {
+          % for col_name in separate_columns:
+           $("#${ base64.b64encode(str('selected_vals["' + col_name + '"]').encode()).decode().replace('=', '') } ").multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true, enableClickableOptGroups: true, enableCollapsibleOptGroups: true, collapseOptGroupsByDefault: true});
           % endfor
-          $("#${ base64.b64encode('single_selectable_type'.encode()).decode().replace('=', '') } ").multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true, enableClickableOptGroups: true, enableCollapsibleOptGroups: true, collapseOptGroupsByDefault: true});
+          $("#${ base64.b64encode('combined_selected_vals'.encode()).decode().replace('=', '') } ").multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true, enableClickableOptGroups: true, enableCollapsibleOptGroups: true, collapseOptGroupsByDefault: true});
       });
   </script>      
 ---
@@ -191,15 +199,18 @@ comment: |
 id: select rows
 code: |
   query_list = []
-  for col_name in all_fields:
-    col_vals = selected_type.get(col_name)
-    if isinstance(col_vals, DADict):
-      if col_vals.any_true():
-        query_list.append([col_name, col_vals.true_values()])
-    elif isinstance(col_vals, bool):
-      query_list.append([col_name])
-    elif col_vals != "":
-      query_list.append((col_name, [col_vals]))
+  for col_name in selected_vals.keys():
+    if selected_vals[col_name].any_true():
+      query_list.append([[col_name, selected_vals[col_name].true_values()]])
+  true_nested_vals = {}
+  for col_and_val, selected in combined_selected_vals.items():
+    if selected:
+      col, val = col_and_val.split(';;;')
+      if col in true_nested_vals:
+        true_nested_vals[col].append(val)
+      else:
+        true_nested_vals[col] = [val]
+  query_list.append([(col_name, vals) for col_name, vals in true_nested_vals.items()])
   row_ids = multi_index.query(query_list)
   #del query_list
 ---
