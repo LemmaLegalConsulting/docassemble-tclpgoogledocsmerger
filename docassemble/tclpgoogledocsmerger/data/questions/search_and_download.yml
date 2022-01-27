@@ -9,8 +9,8 @@ features:
   # https://davidstutz.github.io/bootstrap-multiselect/#getting-started
 ---
 metadata:
-  title: TCLP Search and Download
-  short title: Search
+  title: Choose your climate clauses
+  short title: Choose your climate clauses
 ---
 modules:
   - .drive_connection
@@ -18,10 +18,10 @@ modules:
 ---
 code: |
   separate_column_info = [
-    ('GIC Industry', 'GIC Industry', 'https://en.wikipedia.org/wiki/Global_Industry_Classification_Standard', False),
+    ('Practice Area', 'Practice Area', '', False),
+    ('GIC Industry', 'Sector', 'https://en.wikipedia.org/wiki/Global_Industry_Classification_Standard', False),
     #('GIC Industry Group', 'GIC Industry Group', 'https://en.wikipedia.org/wiki/Global_Industry_Classification_Standard', False),
     #('COP26 Net Zero Chapter', 'COP26 Net Zero Chapter', '', False),
-    ('Practice Area', 'Practice Area', '', False),
   ]
   combined_column_info = [
     ('F - Corp Gov', 'Corporate governance', '', True),
@@ -31,10 +31,10 @@ code: |
     ('F - Corporate Mechanisms', 'Corporate Mechanisms', '', True),
     ('F - Incentives, Enforcement, Disputes', 'Incentives, Enforcement, Disputes', '', True),
     ('F - Other environmental function', 'Other environmental func.', '', True),
-    ('F - Pre-contract', 'Pre-contract', '', True),
-    ('F - Just Transition', 'Just Transition', '', True),
-    ('F - Resilience & Adaptation', 'Resillence & Adaptation', '', True),
-    ('F - Biodiversity', 'Biodiversity', '', True),
+    #('F - Pre-contract', 'Pre-contract', '', True),
+    #('F - Just Transition', 'Just Transition', '', True),
+    #('F - Resilience & Adaptation', 'Resillence & Adaptation', '', True),
+    #('F - Biodiversity', 'Biodiversity', '', True),
   ]
   separate_columns = [a for a, _, _, _ in separate_column_info]
   combined_columns = [a for a, _, _, _ in combined_column_info]
@@ -54,8 +54,10 @@ code: |
   accept_gdpr_notice
   reconsider('snapshot_interview_state')
   prep_documents
-  the_download_task
-  review_before_download
+  if all_clauses:
+    review_before_download
+  else:
+    no_clauses_found
   if the_download_task.ready() and the_assembly_task.ready():
     reached_download_screen = True
     reconsider('snapshot_interview_state')
@@ -78,6 +80,20 @@ subquestion: |
 ---
 code: |
   select_fields = []
+
+  # The big, combined one
+  combined_selected_vals = {}
+  all_combined_vals = []
+  for col, label, help_link, is_top_level in combined_column_info:
+    all_vals = [{'value': f'{col};;;{item}', 'label': item, 'group': label} for item in multi_index.get_values(col)]
+    all_combined_vals.extend(all_vals)
+  
+  select_fields.append(
+        {'label': 'Climate Solutions', 'field': f'combined_selected_vals', 
+         'datatype': 'multiselect',
+         'required': False, 'code': 'all_combined_vals' })
+
+  # Then the GIC Industry and Practice area
   vals_for_columns = {}
   selected_vals = {}
   for col, label, help_link, is_top_level in separate_column_info:
@@ -88,17 +104,6 @@ code: |
     if help_link:
       field_info['help'] = f'[More info here]({help_link})'
     select_fields.append(field_info)
-
-  combined_selected_vals = {}
-  all_combined_vals = []
-  for col, label, help_link, is_top_level in combined_column_info:
-    all_vals = [{'value': f'{col};;;{item}', 'label': item, 'group': label} for item in multi_index.get_values(col)]
-    all_combined_vals.extend(all_vals)
-  
-  select_fields.append(
-        {'label': 'Functions', 'field': f'combined_selected_vals', 
-         'datatype': 'multiselect',
-         'required': False, 'code': 'all_combined_vals' })
 ---
 code: |
   # Take the interesting fields and make them 2 dimensional so easier to view in XLSX
@@ -147,10 +152,14 @@ subquestion: |
   can use in your contracts.
 fields:
   - code: select_fields
+  - note: If you want to hear more about our work, leave us your email and we'll reach out.
+  - Email (optional): email
+    datatype: email
+    required: False
   - no label: accept_gdpr_notice
     datatype: checkboxes
     choices:
-      - I have read and understand the [data privacy policy](https://www.example.com)
+      - I have read and understand the [data privacy policy](https://chancerylaneproject.org/privacy-policy/)
     minlength: 1
     none of the above: False
     validation messages:
@@ -233,7 +242,7 @@ code: |
         all_clause_ids.append(g_file.get('id'))
     if g_files:
       full_name = row[1]['Full name']
-      url = url_base_str.format(row[1]['Full name'].lower().replace(' ', '-'))
+      url = url_base_str.format(row[1]['Full name'].lower().replace(' ', '-').replace('/', '-'))
       all_clause_objects.append(DAObject(
         name=row[1]["Child's name"],
         full_name=full_name,
@@ -277,63 +286,48 @@ code: |
 ---
 id: Review before downloading
 question: |
-  % if all_clauses:
   Review your clauses
-  % else:
-  No matching clauses found.
-  % endif
 subquestion: |
-  % if all_clauses:
-
   Here is more about the individual clauses that we found.
   
   % for obj in all_clause_objects:
   * [${ obj.name }: ${ obj.full_name }](${obj.url})
-      * Last modified at ${ format_datetime(obj.modified_time) }
+      * Last modified at ${ format_date(obj.modified_time) }
   % endfor
-
-  % else:
-  
-  We couldn't find anything that matched all of the attributes that you searched for. Try reducing the number of attributes.
-  
-  % endif
 continue button field: review_before_download
+continue button label: Compile my files into a Word document
+---
+event: no_clauses_found
+question: | 
+  No matching clauses found.
+subquestion: |
+  We couldn't find anything that matched the attributes that you searched for. Try checking more options.
+buttons:
+  - Restart: restart
 ---
 event: waiting_screen
 id: waiting screen
 question: |
-  We're assembling your documents now
+  We're compiling your documents
 subquestion: |
-  Hang tight, we'll refresh this page when your document is ready.
+  This may take a few minutes, so leave this tab open. Thanks for waiting.
 reload: True
 ---
 id: download filled
 event: download_filled
 question: |
-  % if all_clauses:
   Download Your Completed Document
-  % else:
-  No matching clauses found.
-  % endif
 comment: |
   Download the [combined document with all of the found clauses](${ the_doc.url_for() }).
 subquestion: |
-  % if all_clauses:
-  
   [:file-download: Download](${the_doc.url_for(attachment=True)})
 
   Here is more about the individual clauses that we found.
   
   % for obj in all_clause_objects:
   * [${ obj.name }: ${ obj.full_name }](${obj.url})
-      * Last modified at ${ format_datetime(obj.modified_time) }
+      * Last modified at ${ format_date(obj.modified_time) }
   % endfor
-
-  % else:
-  
-  We couldn't find anything that matched all of the attributes that you searched for. Try reducing the number of attributes.
-  
-  % endif
 ---
 attachment:
   variable name: filled_template[i]
