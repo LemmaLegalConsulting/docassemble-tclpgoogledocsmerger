@@ -1,25 +1,40 @@
-from docassemble.base.util import DAGoogleAPI, DAFile
+from docassemble.base.util import DAGoogleAPI, DAFile, log
 from docassemble.base.functions import currency
 import googleapiclient
-from typing import List, Union
+from googleapiclient.errors import HttpError
+from typing import List, Iterable, Union
 from docassemble.base.pandoc import word_to_markdown
 
 api = DAGoogleAPI()
 __all__ = ['word_to_markdown', 
-           'download_drive_files_docx',
+           'download_drive_docx_groups',
+           'download_drive_docx_single',
            'get_folder_id',
            'get_files_for_clause',
            'get_files_in_folder']
 
-def download_drive_files_docx(file_ids:Union[str, List[str]], filename_base:str, export_to_docx:bool=False):
-  """Downloads a list of files from google Drive, either as GDocs converted to DOCX, or directly as DOCX"""
-  if isinstance(file_ids, str):
-    file_ids = [file_ids]
-      
+def download_drive_docx_groups(file_ids_per_clause:Iterable[Iterable[str]], filename_base:str, export_to_docx:bool=False):
   if filename_base[-5:].lower() == ".docx":
     filename_base = filename_base[:-5]
     
   service = api.drive_service()
+  done_groups = []
+  for clause_ids in file_ids_per_clause:
+    done_groups.append(download_drive_docx(service, clause_ids, filename_base, export_to_docx))
+  return done_groups
+
+def download_drive_docx_single(file_ids:Union[str, Iterable[str]], filename_base:str, export_to_docx:bool=False):
+  """Downloads a list of files from google Drive, either as GDocs converted to DOCX, or directly as DOCX"""
+  if isinstance(file_ids, str):
+    file_ids = [file_ids]
+
+  if filename_base[-5:].lower() == ".docx":
+    filename_base = filename_base[:-5]
+
+  service = api.drive_service()
+  return download_drive_docx(service, file_ids, filename_base, export_to_docx)
+
+def download_drive_docx(service, file_ids:Union[str, Iterable[str]], filename_base:str, export_to_docx:bool=False):
   done_files = []
   for idx, file_id in enumerate(file_ids):
     the_file = DAFile()
@@ -91,6 +106,6 @@ def get_files_in_folder(folder_name:str=None, folder_id:str=None):
       if page_token is None or len(items) > 10000:
         break
     return items
-  except HTTPError as ex:
+  except HttpError as ex:
     log(f"Could not connect to Google Drive to see files available: {ex}")
     return []
