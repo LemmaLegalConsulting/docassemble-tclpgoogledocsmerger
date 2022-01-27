@@ -4,7 +4,10 @@ A docassemble extension that helps a user search for docs in a Google Drive base
 
 Made in association with The [Chancery Lane Project](https://chancerylaneproject.org/)
 
-Note: depends an [updated docxcompose](https://github.com/BryceStevenWilley/docxcompose), version `1.3.5-devlemma`.
+Special dependencies:
+* an [updated docxcompose](https://github.com/BryceStevenWilley/docxcompose), version `1.3.5-devlemma`.
+* a branch of docassemble that supports optgroups](https://github.com/BryceStevenWilley/docassemble/tree/optgroups)
+
 
 ## Refreshing the Airtable Data Source.
 
