@@ -260,7 +260,6 @@ code: |
         docx_link=f'[{full_name}]({url})',
         file_ids=these_ids
       ))
-  # all_clause_docs2 = download_drive_files_docx(all_clause_ids, 'doc_')
   prep_documents = True
 ---
 code: |
@@ -272,9 +271,10 @@ code: |
 event: download_task
 code: |
   all_clauses = action_argument('all_clauses')
-  for obj in all_clauses:
-    obj.files = download_drive_files_docx(obj.file_ids, 'doc_')
-  filled_template['final']
+  id_groups = [obj.file_ids for obj in all_clauses]
+  file_groups = download_drive_docx_groups(id_groups, 'doc_')
+  for obj, file_group in zip(all_clauses, file_groups):
+    obj.files = file_group
   background_response_action('download_resp', new_clauses=all_clauses)
 ---
 event: download_resp
@@ -337,6 +337,8 @@ subquestion: |
   * [${ obj.name }: ${ obj.full_name }](${obj.url})
       * Last modified at ${ format_date(obj.modified_time) }
   % endfor
+buttons:
+  - Assemble another document: restart
 ---
 attachment:
   variable name: filled_template[i]
