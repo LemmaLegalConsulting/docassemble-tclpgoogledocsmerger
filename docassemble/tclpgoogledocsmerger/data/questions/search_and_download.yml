@@ -48,6 +48,10 @@ objects:
   - grid_file: DAStaticFile.using(filename='data/sources/Grid_view.csv')
   - url_file: DAStaticFile.using(filename='data/sources/clause_to_url.csv')
 ---
+mandatory: True
+objects:
+  - red: DARedis
+---
 id: Main order block
 mandatory: True
 code: |
@@ -245,28 +249,24 @@ code: |
   all_clause_objects = []
   selected_rows = multi_index.get_full_rows(row_ids)
   for row in selected_rows.iterrows():
-    these_ids = []
-    g_files = get_files_for_clause(all_files, row[1]["Child's name"])
-    if g_files:
+    g_file = get_latest_file_for_clause(all_files, row[1]["Child's name"])
+    if g_file:
       all_clauses.append(row[1]["Child's name"])
-    for g_file in g_files:
       modified_time = g_file.get('modifiedTime')
       if 'id' in g_file:
-        these_ids.append(g_file.get('id'))
         all_clause_ids.append(g_file.get('id'))
-    if g_files:
-      full_name = row[1]['Full name']
       if row[1]['Has URL']:
         url = url_base_str.format(row[1]['URL arg'].lower().replace(' ', '-').replace('/', '-'))
       else:
         url = gdrive_base_url.format(these_ids[0])
+      full_name = row[1]['Full name']
       all_clause_objects.append(DAObject(
         name=row[1]["Child's name"],
         full_name=full_name,
         modified_time=modified_time,
         url=url,
         docx_link=f'[{full_name}]({url})',
-        file_ids=these_ids
+        file_id=g_file.get('id')
       ))
   prep_documents = True
 ---
@@ -279,10 +279,10 @@ code: |
 event: download_task
 code: |
   all_clauses = action_argument('all_clauses')
-  id_groups = [obj.file_ids for obj in all_clauses]
-  file_groups = download_drive_docx_groups(id_groups, 'doc_')
-  for obj, file_group in zip(all_clauses, file_groups):
-    obj.files = file_group
+  ids = [obj.file_id for obj in all_clauses]
+  files = download_drive_docx_groups(id_groups, 'doc_', redis_cache=red)
+  for obj, doc_file in zip(all_clauses, files):
+    obj.file = doc_file 
   background_response_action('download_resp', new_clauses=all_clauses)
 ---
 event: download_resp

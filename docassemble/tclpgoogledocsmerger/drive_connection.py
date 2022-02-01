@@ -2,45 +2,60 @@ from docassemble.base.util import DAGoogleAPI, DAFile, log
 from docassemble.base.functions import currency
 import googleapiclient
 from googleapiclient.errors import HttpError
-from typing import List, Iterable, Union
+from typing import List, Iterable, Union, Optional
 from docassemble.base.pandoc import word_to_markdown
 
 api = DAGoogleAPI()
 __all__ = ['word_to_markdown', 
-           'download_drive_docx_groups',
-           'download_drive_docx_single',
+           'download_drive_docxs',
            'get_folder_id',
-           'get_files_for_clause',
+           'get_latest_file_for_clause',
            'get_files_in_folder']
 
-def download_drive_docx_groups(file_ids_per_clause:Iterable[Iterable[str]], filename_base:str, export_to_docx:bool=False):
-  if filename_base[-5:].lower() == ".docx":
-    filename_base = filename_base[:-5]
-    
+def download_drive_docx_wrapper(
+    file_ids:Union[str, Iterable[str]],
+    filename_base:str, 
+    export_to_docx:bool=False, 
+    last_updateds=Union[str, Iterable[str]],
+    redis_cache=None
+):
   service = api.drive_service()
-  done_groups = []
-  for clause_ids in file_ids_per_clause:
-    done_groups.append(download_drive_docx(service, clause_ids, filename_base, export_to_docx))
-  return done_groups
-
-def download_drive_docx_single(file_ids:Union[str, Iterable[str]], filename_base:str, export_to_docx:bool=False):
-  """Downloads a list of files from google Drive, either as GDocs converted to DOCX, or directly as DOCX"""
   if isinstance(file_ids, str):
     file_ids = [file_ids]
 
   if filename_base[-5:].lower() == ".docx":
     filename_base = filename_base[:-5]
 
-  service = api.drive_service()
-  return download_drive_docx(service, file_ids, filename_base, export_to_docx)
+  return download_drive_docx(service, file_ids, filename_base, export_to_docx, last_updateds=last_updateds, redis_cache=redis_cache)
 
-def download_drive_docx(service, file_ids:Union[str, Iterable[str]], filename_base:str, export_to_docx:bool=False):
+def download_drive_docx(
+    service, 
+    file_ids:Iterable[str],
+    filename_base:str, 
+    export_to_docx:bool=False,
+    last_updateds=Iterable[str],
+    redis_cache=None
+):
   done_files = []
   for idx, file_id in enumerate(file_ids):
     the_file = DAFile()
     the_file.gdrive_file_id = file_id
     the_file.set_random_instance_name()
     the_file.initialize(filename=f'{filename_base}_{idx}.docx')
+    if redis_cache and last_updateds:
+      redis_key = redis_cache.key(file_id)
+      existing_data = redis_cache.get_data(redis_key)
+      last_updated = last_updateds[idx]
+      if existing_data:
+        if existing_data.get('last_updated') >= last_updated:
+          # use this instead
+          the_file.write(existing_data.get('contents'), binary=True)
+          the_file.commit()
+          done_files.append(the_file)
+          continue
+        else:
+          redis_cache.set_data(redis_key, None)
+
     with open(the_file.path(), 'wb') as fh:
       try:
         if export_to_docx:
@@ -56,6 +71,9 @@ def download_drive_docx(service, file_ids:Union[str, Iterable[str]], filename_ba
         log(f"Could not download file {file_id} from Google: {ex}")
     the_file.commit()
     done_files.append(the_file)
+    if redis_cache and last_updateds:
+      new_data = {'last_updated': last_updateds[idx], 'contents': the_file.slurp()}
+      redis_cache.set_data(redis_key, new_data)
   return done_files
   
 def get_folder_id(folder_name) -> str:
@@ -71,15 +89,19 @@ def get_folder_id(folder_name) -> str:
     folder_id = item['id']
   return folder_id
 
-def get_files_for_clause(all_files, childs_name:str) -> List[str]:
+def get_latest_file_for_clause(all_files: List, childs_name:str) -> Optional[str]:
   child_to_check = childs_name.replace("'", '_').replace('’', '_').lower()
-  to_return = []
+  matching_files = []
   for g_file in all_files:
     file_name = g_file.get('name', '')
     file_to_check = file_name.replace("'", "_").replace('’', '_').lower()
     if file_to_check.lower().startswith(child_to_check) and 'Clause Amendment History' not in file_to_check:
-      to_return.append(g_file)
-  return to_return
+      matching_files.append(g_file)
+  sorted_files = sorted(matching_files, key=lambda l: l.get('name', '').upper(), reserve=True)
+  if matching_files:
+    return next(iter(sorted_files), None)
+  else:
+    return None
 
 def get_files_in_folder(folder_name:str=None, folder_id:str=None):
   """Given a folder, get information about all of the files in that folder."""
