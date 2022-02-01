@@ -42,10 +42,11 @@ code: |
 ---
 objects: 
   - filled_template: DADict
-  - multi_index: MultiSelectIndex.using(import_path=static_file.path(), cols_with_indices=selectable_columns)
+  - multi_index: MultiSelectIndex.using(import_path=grid_file.path(), url_path=url_file.path(), cols_with_indices=selectable_columns)
 ---
 objects:
-  - static_file: DAStaticFile.using(filename='data/sources/Grid_view.csv')
+  - grid_file: DAStaticFile.using(filename='data/sources/Grid_view.csv')
+  - url_file: DAStaticFile.using(filename='data/sources/clause_to_url.csv')
 ---
 id: Main order block
 mandatory: True
@@ -142,6 +143,9 @@ code: |
           stuff_to_snapshot[f"column_{column}"] = comma_list(selected_vals[column].true_values())
   except:
     pass
+
+  if defined('email'):
+    stuff_to_snapshot['email'] = email
     
   stuff_to_snapshot['reached_download_screen'] = defined('reached_download_screen')
   store_variables_snapshot(
@@ -235,10 +239,11 @@ code: |
 id: prep documents
 code: |
   url_base_str = 'https://chancerylaneproject.org/climate-clauses/{}'
+  gdrive_base_url = 'https://docs.google.com/document/d/{}'
   all_clause_ids = []
   all_clauses = []
   all_clause_objects = []
-  selected_rows = multi_index.get_full_rows(row_ids) 
+  selected_rows = multi_index.get_full_rows(row_ids)
   for row in selected_rows.iterrows():
     these_ids = []
     g_files = get_files_for_clause(all_files, row[1]["Child's name"])
@@ -251,7 +256,10 @@ code: |
         all_clause_ids.append(g_file.get('id'))
     if g_files:
       full_name = row[1]['Full name']
-      url = url_base_str.format(row[1]['Full name'].lower().replace(' ', '-').replace('/', '-'))
+      if row[1]['Has URL']:
+        url = url_base_str.format(row[1]['URL arg'].lower().replace(' ', '-').replace('/', '-'))
+      else:
+        url = gdrive_base_url.format(these_ids[0])
       all_clause_objects.append(DAObject(
         name=row[1]["Child's name"],
         full_name=full_name,

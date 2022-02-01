@@ -51,6 +51,7 @@ class MultiSelectIndex(DAObject):
   def init(self, *pargs, **kwargs):
     super().init(*pargs, **kwargs)
     import_path = kwargs.get('import_path', '')
+    url_file_path = kwargs.get('url_file_path')
     cols_with_indices = kwargs.get('cols_with_indices', [])
     self.table = pd.read_csv(import_path,
         # Some hardcoded cleaning on the data, particularly lists in columns
@@ -75,6 +76,14 @@ class MultiSelectIndex(DAObject):
             "F - Resilience & Adaptation": split_and_strip,
             "F - Biodiversity": split_and_strip
         })
+    if url_file_path:
+      urls = pd.read_csv(url_file_path)
+      self.table = self.table.merge(urls, on="Child's name", how="left")
+      self.table["URL arg"] = np.where(self.table["URL Title"].isnull(), self.table["Full name"], self.table["URL Title"])
+    else:
+      # Assumes that the URL is the exact same as the full name (not usually true)
+      self.table["URL arg"] = self.table["Full name"]
+
     self.indices = create_indices(self.table, cols_with_indices, id_col="Child's name")
   
   def query(self, one_of_each:List[List[ColumnQuery]]) -> List[str]:
