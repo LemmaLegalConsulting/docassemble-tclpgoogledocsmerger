@@ -42,7 +42,7 @@ code: |
 ---
 objects: 
   - filled_template: DADict
-  - multi_index: MultiSelectIndex.using(import_path=grid_file.path(), url_path=url_file.path(), cols_with_indices=selectable_columns)
+  - multi_index: MultiSelectIndex.using(import_path=grid_file.path(), url_file_path=url_file.path(), cols_with_indices=selectable_columns)
 ---
 objects:
   - grid_file: DAStaticFile.using(filename='data/sources/Grid_view.csv')

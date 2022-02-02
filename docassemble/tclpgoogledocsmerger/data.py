@@ -83,6 +83,7 @@ class MultiSelectIndex(DAObject):
     else:
       # Assumes that the URL is the exact same as the full name (not usually true)
       self.table["URL arg"] = self.table["Full name"]
+      self.table["Has URL"] = True
 
     self.indices = create_indices(self.table, cols_with_indices, id_col="Child's name")
   
