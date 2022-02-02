@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from typing import Dict, List, Optional, Tuple
 from docassemble.base.core import DAObject
+from docassemble.base.util import log
 from functools import reduce
 
 __all__ = ['MultiSelectIndex']
@@ -78,11 +79,14 @@ class MultiSelectIndex(DAObject):
         })
     if url_file_path:
       urls = pd.read_csv(url_file_path)
+      log(f'urls: {urls}')
       self.table = self.table.merge(urls, on="Child's name", how="left")
+      log(f'post merge: {self.table}')
       self.table["URL arg"] = np.where(self.table["URL Title"].isnull(), self.table["Full name"], self.table["URL Title"])
     else:
       # Assumes that the URL is the exact same as the full name (not usually true)
       self.table["URL arg"] = self.table["Full name"]
+      self.table["Has URL"] = True
 
     self.indices = create_indices(self.table, cols_with_indices, id_col="Child's name")
   

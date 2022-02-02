@@ -7,7 +7,8 @@ from docassemble.base.pandoc import word_to_markdown
 
 api = DAGoogleAPI()
 __all__ = ['word_to_markdown', 
-           'download_drive_docxs',
+           'download_drive_docx',
+           'download_drive_docx_wrapper',
            'get_folder_id',
            'get_latest_file_for_clause',
            'get_files_in_folder']
@@ -16,12 +17,14 @@ def download_drive_docx_wrapper(
     file_ids:Union[str, Iterable[str]],
     filename_base:str, 
     export_to_docx:bool=False, 
-    last_updateds=Union[str, Iterable[str]],
+    last_updateds:Union[str, List[str]]=[],
     redis_cache=None
 ):
   service = api.drive_service()
   if isinstance(file_ids, str):
     file_ids = [file_ids]
+  if isinstance(last_updateds, str):
+    last_updateds = [last_updateds]
 
   if filename_base[-5:].lower() == ".docx":
     filename_base = filename_base[:-5]
@@ -33,29 +36,27 @@ def download_drive_docx(
     file_ids:Iterable[str],
     filename_base:str, 
     export_to_docx:bool=False,
-    last_updateds=Iterable[str],
+    last_updateds:List[str]=[],
     redis_cache=None
 ):
   done_files = []
   for idx, file_id in enumerate(file_ids):
-    the_file = DAFile()
-    the_file.gdrive_file_id = file_id
-    the_file.set_random_instance_name()
-    the_file.initialize(filename=f'{filename_base}_{idx}.docx')
     if redis_cache and last_updateds:
       redis_key = redis_cache.key(file_id)
+      log(f'redis key: {redis_key}')
       existing_data = redis_cache.get_data(redis_key)
       last_updated = last_updateds[idx]
       if existing_data:
         if existing_data.get('last_updated') >= last_updated:
-          # use this instead
-          the_file.write(existing_data.get('contents'), binary=True)
-          the_file.commit()
-          done_files.append(the_file)
+          done_files.append(existing_data.get('contents'))
           continue
         else:
           redis_cache.set_data(redis_key, None)
 
+    the_file = DAFile()
+    the_file.gdrive_file_id = file_id
+    the_file.set_random_instance_name()
+    the_file.initialize(filename=f'{filename_base}_{idx}.docx')
     with open(the_file.path(), 'wb') as fh:
       try:
         if export_to_docx:
@@ -72,7 +73,7 @@ def download_drive_docx(
     the_file.commit()
     done_files.append(the_file)
     if redis_cache and last_updateds:
-      new_data = {'last_updated': last_updateds[idx], 'contents': the_file.slurp()}
+      new_data = {'last_updated': last_updateds[idx], 'contents': the_file}
       redis_cache.set_data(redis_key, new_data)
   return done_files
   
@@ -97,7 +98,7 @@ def get_latest_file_for_clause(all_files: List, childs_name:str) -> Optional[str
     file_to_check = file_name.replace("'", "_").replace('’', '_').lower()
     if file_to_check.lower().startswith(child_to_check) and 'Clause Amendment History' not in file_to_check:
       matching_files.append(g_file)
-  sorted_files = sorted(matching_files, key=lambda l: l.get('name', '').upper(), reserve=True)
+  sorted_files = sorted(matching_files, key=lambda l: l.get('name', '').upper(), reverse=True)
   if matching_files:
     return next(iter(sorted_files), None)
   else:

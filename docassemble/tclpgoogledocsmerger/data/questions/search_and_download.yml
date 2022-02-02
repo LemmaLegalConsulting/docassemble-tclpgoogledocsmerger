@@ -42,7 +42,7 @@ code: |
 ---
 objects: 
   - filled_template: DADict
-  - multi_index: MultiSelectIndex.using(import_path=grid_file.path(), url_path=url_file.path(), cols_with_indices=selectable_columns)
+  - multi_index: MultiSelectIndex.using(import_path=grid_file.path(), url_file_path=url_file.path(), cols_with_indices=selectable_columns)
 ---
 objects:
   - grid_file: DAStaticFile.using(filename='data/sources/Grid_view.csv')
@@ -255,10 +255,11 @@ code: |
       modified_time = g_file.get('modifiedTime')
       if 'id' in g_file:
         all_clause_ids.append(g_file.get('id'))
+      log(f'{row}')
       if row[1]['Has URL']:
         url = url_base_str.format(row[1]['URL arg'].lower().replace(' ', '-').replace('/', '-'))
       else:
-        url = gdrive_base_url.format(these_ids[0])
+        url = gdrive_base_url.format(g_file.get('id'))
       full_name = row[1]['Full name']
       all_clause_objects.append(DAObject(
         name=row[1]["Child's name"],
@@ -280,7 +281,7 @@ event: download_task
 code: |
   all_clauses = action_argument('all_clauses')
   ids = [obj.file_id for obj in all_clauses]
-  files = download_drive_docx_groups(id_groups, 'doc_', redis_cache=red)
+  files = download_drive_docx_wrapper(ids, 'doc_', redis_cache=red)
   for obj, doc_file in zip(all_clauses, files):
     obj.file = doc_file 
   background_response_action('download_resp', new_clauses=all_clauses)
