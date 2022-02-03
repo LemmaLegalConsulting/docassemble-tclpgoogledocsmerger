@@ -15,6 +15,7 @@ metadata:
 modules:
   - .drive_connection
   - .data
+  - .merge_docs
 ---
 code: |
   separate_column_info = [
@@ -47,6 +48,7 @@ objects:
 objects:
   - grid_file: DAStaticFile.using(filename='data/sources/Grid_view.csv')
   - url_file: DAStaticFile.using(filename='data/sources/clause_to_url.csv')
+  - template_file: DAStaticFile.using(filename='data/templates/ClausesTemplate-new.docx')
 ---
 mandatory: True
 objects:
@@ -158,7 +160,8 @@ code: |
   snapshot_interview_state = True
 ---
 code: |
-  full_clauses_folder_id =  "1YDT_u4AJMzwJKNcAH2naYHhycNd-iHvt"
+  full_clauses_folder_id = "1QNQG3ToIOJ5p3PjC6cPlKgz3nXK3OYJG" #ian's
+  # "1YDT_u4AJMzwJKNcAH2naYHhycNd-iHvt" #original
   all_files = get_files_in_folder(folder_id=full_clauses_folder_id)
 ---
 id: search variables
@@ -281,7 +284,8 @@ event: download_task
 code: |
   all_clauses = action_argument('all_clauses')
   ids = [obj.file_id for obj in all_clauses]
-  files = download_drive_docx_wrapper(ids, 'doc_', redis_cache=red)
+  last_updateds = [obj.modified_time for obj in all_clauses]
+  files = download_drive_docx_wrapper(ids, 'doc_', redis_cache=red, last_updateds=last_updateds, export_to_docx=True)
   for obj, doc_file in zip(all_clauses, files):
     obj.file = doc_file 
   background_response_action('download_resp', new_clauses=all_clauses)
@@ -294,8 +298,8 @@ code: |
 event: assemble_task
 code: |
   all_clause_objects = action_argument('all_clauses')
-  filled_template['final']
-  background_response_action('assemble_resp', the_doc=filled_template['final'])
+  the_doc = merge_docs(template_file.path(), all_clause_objects)
+  background_response_action('assemble_resp', the_doc=the_doc)
 ---
 event: assemble_resp
 code: |
@@ -348,11 +352,3 @@ subquestion: |
   % endfor
 buttons:
   - Assemble another document: restart
----
-attachment:
-  variable name: filled_template[i]
-  name: Requested Clauses
-  filename: requested_clauses
-  skip undefined: True
-  docx template file: ClausesTemplate.docx
-  update references: True

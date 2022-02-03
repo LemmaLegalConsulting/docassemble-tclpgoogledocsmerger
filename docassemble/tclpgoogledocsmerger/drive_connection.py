@@ -96,7 +96,7 @@ def get_latest_file_for_clause(all_files: List, childs_name:str) -> Optional[str
   for g_file in all_files:
     file_name = g_file.get('name', '')
     file_to_check = file_name.replace("'", "_").replace('’', '_').lower()
-    if file_to_check.lower().startswith(child_to_check) and 'Clause Amendment History' not in file_to_check:
+    if file_to_check.lower().startswith(child_to_check) and 'Clause Amendment History'.lower() not in file_to_check:
       matching_files.append(g_file)
   sorted_files = sorted(matching_files, key=lambda l: l.get('name', '').upper(), reverse=True)
   if matching_files:
