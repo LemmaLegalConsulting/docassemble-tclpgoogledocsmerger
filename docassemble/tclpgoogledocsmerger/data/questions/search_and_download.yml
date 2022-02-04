@@ -4,7 +4,9 @@ imports:
   - base64
 ---
 features:
-  css: bootstrap-multiselect.min.css
+  css: 
+    - bootstrap-multiselect.min.css
+    - tclp.css
   javascript: bootstrap-multiselect.min.js
   # https://davidstutz.github.io/bootstrap-multiselect/#getting-started
 ---
