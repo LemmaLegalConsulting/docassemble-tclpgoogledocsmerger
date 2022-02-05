@@ -47,7 +47,7 @@ def download_drive_docx(
       last_updated = last_updateds[idx]
       if existing_data:
         if existing_data.get('last_updated') >= last_updated:
-          log(f'using cached version of file : {file_id}')
+          log(f'using cached version of doc with key: {redis_key}')
           done_files.append(existing_data.get('contents'))
           continue
         else:
@@ -70,9 +70,10 @@ def download_drive_docx(
           status, done = downloader.next_chunk()
       except HttpError as ex:
         log(f"Could not download file {file_id} from Google: {ex}")
+        the_file = None
     the_file.commit()
     done_files.append(the_file)
-    if redis_cache and last_updateds:
+    if the_file and redis_cache and last_updateds:
       new_data = {'last_updated': last_updateds[idx], 'contents': the_file}
       redis_cache.set_data(redis_key, new_data)
   return done_files
