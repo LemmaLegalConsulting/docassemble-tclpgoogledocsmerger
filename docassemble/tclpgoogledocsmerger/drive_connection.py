@@ -43,11 +43,11 @@ def download_drive_docx(
   for idx, file_id in enumerate(file_ids):
     if redis_cache and last_updateds:
       redis_key = redis_cache.key(file_id)
-      log(f'redis key: {redis_key}')
       existing_data = redis_cache.get_data(redis_key)
       last_updated = last_updateds[idx]
       if existing_data:
         if existing_data.get('last_updated') >= last_updated:
+          log(f'using cached version of file : {file_id}')
           done_files.append(existing_data.get('contents'))
           continue
         else:
