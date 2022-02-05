@@ -162,7 +162,8 @@ code: |
   snapshot_interview_state = True
 ---
 code: |
-  full_clauses_folder_id = "1QNQG3ToIOJ5p3PjC6cPlKgz3nXK3OYJG" #ian's
+  full_clauses_folder_id = "1-_w_seyUBhzSBb7h9KSz4cA5Z4e24WS1" # rtf'd
+  # "1QNQG3ToIOJ5p3PjC6cPlKgz3nXK3OYJG" #ian's
   # "1YDT_u4AJMzwJKNcAH2naYHhycNd-iHvt" #original
   all_files = get_files_in_folder(folder_id=full_clauses_folder_id)
 ---
