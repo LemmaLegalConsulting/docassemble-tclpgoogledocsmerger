@@ -71,7 +71,8 @@ def download_drive_docx(
       except HttpError as ex:
         log(f"Could not download file {file_id} from Google: {ex}")
         the_file = None
-    the_file.commit()
+    if the_file:
+      the_file.commit()
     done_files.append(the_file)
     if the_file and redis_cache and last_updateds:
       new_data = {'last_updated': last_updateds[idx], 'contents': the_file}
