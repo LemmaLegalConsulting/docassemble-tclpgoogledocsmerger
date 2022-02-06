@@ -50,7 +50,7 @@ objects:
 objects:
   - grid_file: DAStaticFile.using(filename='data/sources/Grid_view.csv')
   - url_file: DAStaticFile.using(filename='data/sources/clause_to_url.csv')
-  - template_file: DAStaticFile.using(filename='data/templates/ClausesTemplate-new.docx')
+  - template_file: DAStaticFile.using(filename='data/templates/ClausesTemplate_fixed.docx')
 ---
 mandatory: True
 objects:
