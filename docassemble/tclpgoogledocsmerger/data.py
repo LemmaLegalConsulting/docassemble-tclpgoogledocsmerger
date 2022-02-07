@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from typing import Dict, List, Optional, Tuple
 from docassemble.base.core import DAObject
+from docassemble.base.util import log
 from functools import reduce
 
 __all__ = ['MultiSelectIndex']

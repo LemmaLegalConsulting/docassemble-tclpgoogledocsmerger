@@ -5,9 +5,13 @@ A docassemble extension that helps a user search for docs in a Google Drive base
 Made in association with The [Chancery Lane Project](https://chancerylaneproject.org/)
 
 Special dependencies:
-* an [updated docxcompose](https://github.com/BryceStevenWilley/docxcompose), version `1.3.5-devlemma`.
-* a branch of docassemble that supports optgroups](https://github.com/BryceStevenWilley/docassemble/tree/optgroups)
-
+* a branch of [docxcompose](https://github.com/BryceStevenWilley/docxcompose/tree/master), version `1.3.5-devlemma`.
+  * this branch merges a [standing PR](https://github.com/4teamwork/docxcompose/pull/58) that works when certain styles aren't present
+  * also fixes some issues with [abstractNumId uniqueness](https://github.com/BryceStevenWilley/docxcompose/commit/a90e445857dbf61ce5c999bb50b13291b51d7b12)
+* a branch of [docxtpl](https://github.com/LemmaLegalConsulting/docxtpl/tree/subdoc_bookmark_issues)
+  * this branch fixed an issue where bookmark ids were only renumbered per subdocument, not over the whole document
+* a branch of [docassemble that supports optgroups](https://github.com/BryceStevenWilley/docassemble/tree/optgroups)
+  * also includes a [PR that prevents DA from crashing on newer versions of docxtpl](https://github.com/jhpyle/docassemble/pull/504), which the previous branch includes
 
 ## Refreshing the Airtable Data Source.
 
