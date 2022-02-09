@@ -59,10 +59,10 @@ def download_drive_docx(
         redis_cache.set_data(redis_key, None)
 
     the_file = DAFile()
-    the_file.set_attributes(private=False, persistent=True)
     the_file.gdrive_file_id = file_id
     the_file.set_random_instance_name()
     the_file.initialize(filename=f'{filename_base}_{idx}.docx')
+    the_file.set_attributes(private=False, persistent=True)
     with open(the_file.path(), 'wb') as fh:
       try:
         if export_to_docx:
