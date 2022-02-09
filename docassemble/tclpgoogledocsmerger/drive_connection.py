@@ -45,15 +45,21 @@ def download_drive_docx(
       redis_key = redis_cache.key(file_id)
       existing_data = redis_cache.get_data(redis_key)
       last_updated = last_updateds[idx]
-      if existing_data:
-        if existing_data.get('last_updated') >= last_updated:
+      if existing_data and 'contents' in existing_data and existing_data.get('last_updated') >= last_updated:
+        try:
+          existing_data.get('contents').retrieve()
           log(f'using cached version of doc with key: {redis_key}')
           done_files.append(existing_data.get('contents'))
           continue
-        else:
+        except ex:
+          log(f'failed to use cached version of doc with key: {redis_key}: {ex}')
           redis_cache.set_data(redis_key, None)
+      else:
+        log(f'invalidating cache of {redis_key}')
+        redis_cache.set_data(redis_key, None)
 
     the_file = DAFile()
+    the_file.set_attributes(private=False, persistent=True)
     the_file.gdrive_file_id = file_id
     the_file.set_random_instance_name()
     the_file.initialize(filename=f'{filename_base}_{idx}.docx')
