@@ -93,6 +93,8 @@ class MultiSelectIndex(DAObject):
     Then only the intersection of the rows that match all of the column queries are returned."""
     rows_per_query = []
     for col_queries in one_of_each:
+      if not col_queries:
+        continue
       rows_for_query = set()
       for col_name, col_vals in col_queries:
         if col_vals is None:

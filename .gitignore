@@ -2,3 +2,4 @@
 .vscode/**
 .~lock*
 *.egg-info/**
+experiments/**
