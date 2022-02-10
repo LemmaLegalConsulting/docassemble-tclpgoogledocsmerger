@@ -242,9 +242,9 @@ code: |
         true_nested_vals[col].append(val)
       else:
         true_nested_vals[col] = [val]
-  query_list.append([(col_name, vals) for col_name, vals in true_nested_vals.items()])
+  if true_nested_vals:
+    query_list.append([(col_name, vals) for col_name, vals in true_nested_vals.items()])
   row_ids = multi_index.query(query_list)
-  #del query_list
 ---
 id: prep documents
 code: |
