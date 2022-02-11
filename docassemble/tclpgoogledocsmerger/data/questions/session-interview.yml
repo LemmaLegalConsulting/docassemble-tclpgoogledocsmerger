@@ -1,13 +1,8 @@
 metadata:
-  title: Interviews
-  documentation: "https://docassemble.org/docs/config.html#session list interview"
-  example start: 1
-  example end: 7
+  title: Past Clause Searches
 ---
 metadata:
-  require login: True
   temporary session: True
-  hidden: True
 ---
 reconsider: True
 code: |
@@ -15,7 +10,10 @@ code: |
   list_of_interviews = list()
   next_id = None
   while True:
-    (items, next_id) = interview_list(next_id=next_id)
+    next_item = interview_list(next_id=next_id)
+    if not next_item:
+      break
+    (items, next_id) = next_item
     for info in items:
       if not info['metadata'].get('hidden', False):
         list_of_interviews.append(info)
@@ -28,10 +26,8 @@ table: session_table
 rows: |
   list_of_interviews
 columns:
-  - Title: |
-      '<a href="' + interview_url(i=row_item['filename'], session=row_item['session']) + '">' + row_item['title'] + '</a>' if 'title' in row_item else ''
-  - Modified: |
-      row_item['modtime'] if 'modtime' in row_item else ''
+  - Search Date: |
+      '<a href="' + interview_url(i=row_item['filename'], session=row_item['session']) + '">' + row_item['modtime'] + '</a>' if 'modtime' in row_item else ''
   - Delete: |
       action_button_html(url_action('delete', filename=row_item['filename'], session=row_item['session']), color='warning', label='Delete') if 'title' in row_item else action_button_html(url_action('delete_all'), color='danger', label='Delete All')
 ---
@@ -39,16 +35,18 @@ table css class: table table-striped
 prevent going back: True
 mandatory: True
 question: |
-  Resume an interview
+  Past Clause Searches
 subquestion: |
+  ${ action_button_html(interview_url(i=user_info().package + ":search_and_download.yml",reset=1), label="Start a new Clause Search") }
+  
   % if len(list_of_interviews) > 0:
-  Click the interview title
-  to resume an interview
+  Click the search date
+  to revisit a search
   you already started.
 
   ${ session_table }
   % else:
-  You do not have any sessions.
+  You do not have any seaches.
   % endif
 ---
 event: delete
