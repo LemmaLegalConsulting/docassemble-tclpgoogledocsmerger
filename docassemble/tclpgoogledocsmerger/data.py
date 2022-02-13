@@ -1,7 +1,7 @@
 import re
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Mapping
 from docassemble.base.core import DAObject
 from docassemble.base.util import log
 from functools import reduce
@@ -108,6 +108,31 @@ class MultiSelectIndex(DAObject):
     # Get only the row ids that match all of the column queries
     return sorted(reduce(lambda a, b: a.intersection(b), rows_per_query, next(iter(rows_per_query))))
 
+  def query_with_explainations(self, one_of_each:List[List[ColumnQuery]]) -> Mapping[str, List[str]]:
+    rows_per_query = []
+    rows_per_tag = {}
+    for col_queries in one_of_each:
+      if not col_queries:
+        continue
+      rows_for_query = set()
+      for col_name, col_vals in col_queries:
+        if col_vals is None:
+          for rows in self.indices[col_name].values():
+            rows_for_query = rows_for_query.union(rows)
+            rows_per_tag[f'{col_name}'] = sorted(rows_for_query)
+        else:
+          for col_val in col_vals:
+            rows = self.indices[col_name].get(col_val, [])
+            rows_for_query = rows_for_query.union(rows)
+            rows_per_tag[f'{col_name}: {col_val}'] = sorted(rows)
+      rows_per_query.append(rows_for_query)
+
+    # Get only the row ids that match all of the column queries
+    all_matches_rows = set(reduce(lambda a, b: a.intersection(b), rows_per_query, next(iter(rows_per_query))))
+    for tag, rows in rows_per_tag.items():
+      rows_per_tag[tag] = [row for row in rows if row in all_matches_rows]
+    return all_matches_rows, rows_per_tag
+  
   def get_full_rows(self, row_ids, id_col="Child's name"):
     return self.table[self.table[id_col].isin(row_ids)]
 

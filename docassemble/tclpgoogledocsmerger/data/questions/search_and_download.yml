@@ -1,7 +1,15 @@
 ---
+include:
+    - docassemble.ALToolbox:collapse_template.yml
+---
 imports:
   - mammoth
   - base64
+---
+modules:
+  - .drive_connection
+  - .data
+  - .merge_docs
 ---
 features:
   css: 
@@ -13,11 +21,7 @@ features:
 metadata:
   title: Choose your climate clauses
   short title: Choose your climate clauses
----
-modules:
-  - .drive_connection
-  - .data
-  - .merge_docs
+  temporary session: True
 ---
 code: |
   separate_column_info = [
@@ -196,31 +200,7 @@ script: |
           % endfor
           $("#${ base64.b64encode('combined_selected_vals'.encode()).decode().replace('=', '') } ").multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true, enableClickableOptGroups: true, enableCollapsibleOptGroups: true, collapseOptGroupsByDefault: true});
       });
-  </script>      
----
-comment: |
-  - Corporate Governance: use_coporate_governance
-    datatype: yesnowide
-  - Contract emissions: use_contract_emissions
-    datatype: yesnowide
-  - Organization emissions: use_organization_emissions
-    datatype: yesnowide
-  - Reporting & Disclosures: use_reporting_and_disclosures
-    datatype: yesnowide
-  - Corporate Mechanisms: use_roporate_mechanisms
-    datatype: yesnowide
-  - Incentives, Enforcement, Disputes: use_incentives
-    datatype: yesnowide
-  - Other environmental function: use_other_environmental_function
-    datatype: yesnowide
-  - Pre-contract: use_pre_contract
-    datatype: yesnowide
-  - Just Transition: use_just_transition
-    datatype: yesnowide
-  - Resillience & Adaptiation: use_resillience
-    datatype: yesnowide
-  - Biodiversity: use_biodiversity
-    datatype: yesnowide
+  </script>
 ---
 id: select rows
 code: |
@@ -238,7 +218,7 @@ code: |
         true_nested_vals[col] = [val]
   if true_nested_vals:
     query_list.append([(col_name, vals) for col_name, vals in true_nested_vals.items()])
-  row_ids = multi_index.query(query_list)
+  row_ids, tags_with_rows = multi_index.query_with_explainations(query_list)
 ---
 id: prep documents
 code: |
@@ -280,14 +260,34 @@ code: |
   last_updateds = [obj.modified_time for obj in all_clauses]
   files = download_drive_docx_wrapper(ids, 'doc_', redis_cache=red, last_updateds=last_updateds)
   for obj, doc_file in zip(all_clauses, files):
-    obj.file = doc_file 
-  the_doc = merge_docs(template_file.path(), all_clauses)
+    obj.file = doc_file
+  the_doc = merge_docs(template_file.path(), all_clauses, tags_with_rows)
   background_response_action('download_resp', the_doc=the_doc) 
 ---
 event: download_resp
 code: |
   the_doc = action_argument('the_doc')
   background_response()
+---
+template: tags_to_docs_template
+subject: |
+  See which clause were found from each of your search tags
+content: |
+  % for tag, rows in tags_with_rows.items():
+  * ${ tag.strip(' -F') }:
+  % for row in rows:
+      * ${ row }
+  % endfor
+  % endfor
+---
+template: individual_list_template
+subject: |
+  See more about each individual clause
+content: |
+  % for obj in all_clause_objects:
+  * [${ obj.name }: ${ obj.full_name }](${obj.url})
+      * Last modified at ${ format_date(obj.modified_time) }
+  % endfor
 ---
 event: no_clauses_found
 question: | 
@@ -303,13 +303,11 @@ question: |
   We're compiling your documents
 subquestion: |
   This may take a few minutes, so leave this tab open. Thanks for waiting.
-
-  Here is more about the individual clauses that we found.
   
-  % for obj in all_clause_objects:
-  * [${ obj.name }: ${ obj.full_name }](${obj.url})
-      * Last modified at ${ format_date(obj.modified_time) }
-  % endfor
+  ${ collapse_template(tags_to_docs_template) }
+
+  ${ collapse_template(individual_list_template) }
+
 reload: True
 ---
 id: download filled
@@ -323,9 +321,9 @@ subquestion: |
 
   Here is more about the individual clauses that we found.
   
-  % for obj in all_clause_objects:
-  * [${ obj.name }: ${ obj.full_name }](${obj.url})
-      * Last modified at ${ format_date(obj.modified_time) }
-  % endfor
+  ${ collapse_template(tags_to_docs_template) }
+
+  ${ collapse_template(individual_list_template) }
+  
 buttons:
   - Assemble another document: restart
