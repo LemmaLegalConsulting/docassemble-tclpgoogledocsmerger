@@ -303,9 +303,7 @@ question: |
   We're compiling your documents
 subquestion: |
   This may take a few minutes, so leave this tab open. Thanks for waiting.
-  
-  ---
-
+under: |
   ## ${ tags_to_docs_template.subject }
 
   ${ tags_to_docs_template.show() }
@@ -324,9 +322,9 @@ comment: |
   Download the [combined document with all of the found clauses](${ the_doc.url_for() }).
 subquestion: |
   [:file-download: Download](${the_doc.url_for(attachment=True)})
-
-  ---
-
+buttons:
+  - Assemble another document: restart
+under: |
   ## ${ tags_to_docs_template.subject }
 
   ${ tags_to_docs_template.show() }
@@ -334,6 +332,3 @@ subquestion: |
   ## ${ individual_list_template.subject }
 
   ${ individual_list_template.show() }
-  
-buttons:
-  - Assemble another document: restart
