@@ -271,7 +271,7 @@ code: |
 ---
 template: tags_to_docs_template
 subject: |
-  See which clause were found from each of your search tags
+  Clauses organized by tag
 content: |
   % for tag, rows in tags_with_rows.items():
   * ${ tag.strip(' -F') }:
@@ -282,7 +282,7 @@ content: |
 ---
 template: individual_list_template
 subject: |
-  See more about each individual clause
+  More about each individual clause
 content: |
   % for obj in all_clause_objects:
   * [${ obj.name }: ${ obj.full_name }](${obj.url})
@@ -306,11 +306,11 @@ subquestion: |
   
   ---
 
-  # ${ tags_to_docs_template.subject }
+  ## ${ tags_to_docs_template.subject }
 
   ${ tags_to_docs_template.show() }
 
-  # ${ individual_list_template.subject }
+  ## ${ individual_list_template.subject }
 
   ${ individual_list_template.show() }
 
@@ -327,11 +327,11 @@ subquestion: |
 
   ---
 
-  # ${ tags_to_docs_template.subject }
+  ## ${ tags_to_docs_template.subject }
 
   ${ tags_to_docs_template.show() }
 
-  # ${ individual_list_template.subject }
+  ## ${ individual_list_template.subject }
 
   ${ individual_list_template.show() }
   
