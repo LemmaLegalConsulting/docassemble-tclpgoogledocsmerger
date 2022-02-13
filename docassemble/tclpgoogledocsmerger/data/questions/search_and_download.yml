@@ -304,13 +304,14 @@ question: |
 subquestion: |
   This may take a few minutes, so leave this tab open. Thanks for waiting.
 under: |
+  ## ${ individual_list_template.subject }
+
+  ${ individual_list_template.show() }
+
   ## ${ tags_to_docs_template.subject }
 
   ${ tags_to_docs_template.show() }
 
-  ## ${ individual_list_template.subject }
-
-  ${ individual_list_template.show() }
 
 reload: True
 ---
@@ -325,10 +326,10 @@ subquestion: |
 buttons:
   - Assemble another document: restart
 under: |
-  ## ${ tags_to_docs_template.subject }
-
-  ${ tags_to_docs_template.show() }
-
   ## ${ individual_list_template.subject }
 
   ${ individual_list_template.show() }
+
+  ## ${ tags_to_docs_template.subject }
+
+  ${ tags_to_docs_template.show() }
