@@ -304,9 +304,9 @@ question: |
 subquestion: |
   This may take a few minutes, so leave this tab open. Thanks for waiting.
   
-  ${ collapse_template(tags_to_docs_template) }
+  ${ tags_to_docs_template.show() }
 
-  ${ collapse_template(individual_list_template) }
+  ${ individual_list_template.show() }
 
 reload: True
 ---
@@ -321,9 +321,9 @@ subquestion: |
 
   Here is more about the individual clauses that we found.
   
-  ${ collapse_template(tags_to_docs_template) }
+  ${ tags_to_docs_template.show() }
 
-  ${ collapse_template(individual_list_template) }
+  ${ individual_list_template.show() }
   
 buttons:
   - Assemble another document: restart
