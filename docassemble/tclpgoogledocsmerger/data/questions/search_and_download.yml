@@ -63,21 +63,14 @@ code: |
   accept_gdpr_notice
   reconsider('snapshot_interview_state')
   prep_documents
-  if all_clauses:
-    review_before_download
-  else:
+  if not all_clauses:
     no_clauses_found
   if the_download_task.ready():
     if the_download_task.failed():
       show_failed_screen
-    if the_assembly_task.ready():
-      if the_assembly_task.failed():
-        show_failed_screen
-      reached_download_screen = True
-      reconsider('snapshot_interview_state')
-      download_filled
-    else:
-      waiting_screen
+    reached_download_screen = True
+    reconsider('snapshot_interview_state')
+    download_filled
   else:
     waiting_screen
 ---
@@ -188,6 +181,7 @@ fields:
     validation messages:
       minlength: |
         You need to accept the data privacy policy to continue.
+continue button label: Compile these clauses into a Word document
 validation code: |
    indiv_any_trues = [bool(a_type) and (not isinstance(a_type, list) or a_type.any_true()) for a_type in selected_vals.values()]
    if not any(indiv_any_trues):
@@ -279,9 +273,6 @@ code: |
 code: |
   the_download_task = background_action('download_task', all_clauses=all_clause_objects)
 ---
-code: |
-  the_assembly_task = background_action('assemble_task', all_clauses=all_clause_objects)
----
 event: download_task
 code: |
   all_clauses = action_argument('all_clauses')
@@ -290,36 +281,13 @@ code: |
   files = download_drive_docx_wrapper(ids, 'doc_', redis_cache=red, last_updateds=last_updateds)
   for obj, doc_file in zip(all_clauses, files):
     obj.file = doc_file 
-  background_response_action('download_resp', new_clauses=all_clauses)
+  the_doc = merge_docs(template_file.path(), all_clauses)
+  background_response_action('download_resp', the_doc=the_doc) 
 ---
 event: download_resp
 code: |
-  all_clause_objects = action_argument('new_clauses')
-  background_response()
----
-event: assemble_task
-code: |
-  all_clause_objects = action_argument('all_clauses')
-  the_doc = merge_docs(template_file.path(), all_clause_objects)
-  background_response_action('assemble_resp', the_doc=the_doc)
----
-event: assemble_resp
-code: |
   the_doc = action_argument('the_doc')
   background_response()
----
-id: Review before downloading
-question: |
-  Review your clauses
-subquestion: |
-  Here is more about the individual clauses that we found.
-  
-  % for obj in all_clause_objects:
-  * [${ obj.name }: ${ obj.full_name }](${obj.url})
-      * Last modified at ${ format_date(obj.modified_time) }
-  % endfor
-continue button field: review_before_download
-continue button label: Compile my files into a Word document
 ---
 event: no_clauses_found
 question: | 
@@ -335,6 +303,13 @@ question: |
   We're compiling your documents
 subquestion: |
   This may take a few minutes, so leave this tab open. Thanks for waiting.
+
+  Here is more about the individual clauses that we found.
+  
+  % for obj in all_clause_objects:
+  * [${ obj.name }: ${ obj.full_name }](${obj.url})
+      * Last modified at ${ format_date(obj.modified_time) }
+  % endfor
 reload: True
 ---
 id: download filled
