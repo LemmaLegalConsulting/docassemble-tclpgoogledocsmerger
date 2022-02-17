@@ -1,7 +1,15 @@
 ---
+include:
+    - docassemble.ALToolbox:collapse_template.yml
+---
 imports:
   - mammoth
   - base64
+---
+modules:
+  - .drive_connection
+  - .data
+  - .merge_docs
 ---
 features:
   css: 
@@ -13,11 +21,7 @@ features:
 metadata:
   title: Choose your climate clauses
   short title: Choose your climate clauses
----
-modules:
-  - .drive_connection
-  - .data
-  - .merge_docs
+  temporary session: True
 ---
 code: |
   separate_column_info = [
@@ -63,21 +67,14 @@ code: |
   accept_gdpr_notice
   reconsider('snapshot_interview_state')
   prep_documents
-  if all_clauses:
-    review_before_download
-  else:
+  if not all_clause_names:
     no_clauses_found
   if the_download_task.ready():
     if the_download_task.failed():
       show_failed_screen
-    if the_assembly_task.ready():
-      if the_assembly_task.failed():
-        show_failed_screen
-      reached_download_screen = True
-      reconsider('snapshot_interview_state')
-      download_filled
-    else:
-      waiting_screen
+    reached_download_screen = True
+    reconsider('snapshot_interview_state')
+    download_filled
   else:
     waiting_screen
 ---
@@ -142,7 +139,7 @@ code: |
   # Don't let DA parse nameerrors so that all data is recorded in one block,
   # regardless of how far in interview someone got
   try:
-    stuff_to_snapshot['all_clauses'] = comma_list(all_clauses)
+    stuff_to_snapshot['all_clauses_names'] = comma_list(all_clause_names)
     stuff_to_snapshot['all_clauses_full_names'] = comma_list(f'"{clause.full_name}"' for clause in all_clause_objects)
     stuff_to_snapshot['selected_rows'] = comma_list([row[1]["Child's name"] for row in selected_rows.iterrows()])
     if defined('selected_vals'):
@@ -188,6 +185,7 @@ fields:
     validation messages:
       minlength: |
         You need to accept the data privacy policy to continue.
+continue button label: Compile these clauses into a Word document
 validation code: |
    indiv_any_trues = [bool(a_type) and (not isinstance(a_type, list) or a_type.any_true()) for a_type in selected_vals.values()]
    if not any(indiv_any_trues):
@@ -202,31 +200,7 @@ script: |
           % endfor
           $("#${ base64.b64encode('combined_selected_vals'.encode()).decode().replace('=', '') } ").multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true, enableClickableOptGroups: true, enableCollapsibleOptGroups: true, collapseOptGroupsByDefault: true});
       });
-  </script>      
----
-comment: |
-  - Corporate Governance: use_coporate_governance
-    datatype: yesnowide
-  - Contract emissions: use_contract_emissions
-    datatype: yesnowide
-  - Organization emissions: use_organization_emissions
-    datatype: yesnowide
-  - Reporting & Disclosures: use_reporting_and_disclosures
-    datatype: yesnowide
-  - Corporate Mechanisms: use_roporate_mechanisms
-    datatype: yesnowide
-  - Incentives, Enforcement, Disputes: use_incentives
-    datatype: yesnowide
-  - Other environmental function: use_other_environmental_function
-    datatype: yesnowide
-  - Pre-contract: use_pre_contract
-    datatype: yesnowide
-  - Just Transition: use_just_transition
-    datatype: yesnowide
-  - Resillience & Adaptiation: use_resillience
-    datatype: yesnowide
-  - Biodiversity: use_biodiversity
-    datatype: yesnowide
+  </script>
 ---
 id: select rows
 code: |
@@ -244,23 +218,20 @@ code: |
         true_nested_vals[col] = [val]
   if true_nested_vals:
     query_list.append([(col_name, vals) for col_name, vals in true_nested_vals.items()])
-  row_ids = multi_index.query(query_list)
+  row_ids, tags_with_rows = multi_index.query_with_explainations(query_list)
 ---
 id: prep documents
 code: |
   url_base_str = 'https://chancerylaneproject.org/climate-clauses/{}'
   gdrive_base_url = 'https://docs.google.com/document/d/{}'
-  all_clause_ids = []
-  all_clauses = []
+  all_clause_names = []
   all_clause_objects = []
   selected_rows = multi_index.get_full_rows(row_ids)
   for row in selected_rows.iterrows():
     g_file = get_latest_file_for_clause(all_files, row[1]["Child's name"])
     if g_file:
-      all_clauses.append(row[1]["Child's name"])
+      all_clause_names.append(row[1]["Child's name"])
       modified_time = g_file.get('modifiedTime')
-      if 'id' in g_file:
-        all_clause_ids.append(g_file.get('id'))
       if row[1].get('Has URL'):
         url = url_base_str.format(row[1].get('URL arg', '').lower().replace(' ', '-').replace('/', '-'))
       else:
@@ -274,13 +245,18 @@ code: |
         docx_link=f'[{full_name}]({url})',
         file_id=g_file.get('id')
       ))
+  # Remove docs from tags_with_rows that weren't found on Drive
+  all_clause_set = set(all_clause_names)
+  initial_tags = list(tags_with_rows.keys())
+  for tag in initial_tags:
+    tags_with_rows[tag] = [row for row in tags_with_rows[tag] if row in all_clause_set]
+    if not tags_with_rows[tag]:
+      tags_with_rows.pop(tag, None)
+  del all_clause_set
   prep_documents = True
 ---
 code: |
   the_download_task = background_action('download_task', all_clauses=all_clause_objects)
----
-code: |
-  the_assembly_task = background_action('assemble_task', all_clauses=all_clause_objects)
 ---
 event: download_task
 code: |
@@ -289,37 +265,34 @@ code: |
   last_updateds = [obj.modified_time for obj in all_clauses]
   files = download_drive_docx_wrapper(ids, 'doc_', redis_cache=red, last_updateds=last_updateds)
   for obj, doc_file in zip(all_clauses, files):
-    obj.file = doc_file 
-  background_response_action('download_resp', new_clauses=all_clauses)
+    obj.file = doc_file
+  the_doc = merge_docs(template_file.path(), all_clauses, tags_with_rows)
+  background_response_action('download_resp', the_doc=the_doc) 
 ---
 event: download_resp
-code: |
-  all_clause_objects = action_argument('new_clauses')
-  background_response()
----
-event: assemble_task
-code: |
-  all_clause_objects = action_argument('all_clauses')
-  the_doc = merge_docs(template_file.path(), all_clause_objects)
-  background_response_action('assemble_resp', the_doc=the_doc)
----
-event: assemble_resp
 code: |
   the_doc = action_argument('the_doc')
   background_response()
 ---
-id: Review before downloading
-question: |
-  Review your clauses
-subquestion: |
-  Here is more about the individual clauses that we found.
-  
+template: tags_to_docs_template
+subject: |
+  Clauses organized by tag
+content: |
+  % for tag, rows in tags_with_rows.items():
+  * ${ tag.strip(' -F') }:
+  % for row in rows:
+      * ${ row }
+  % endfor
+  % endfor
+---
+template: individual_list_template
+subject: |
+  More about each individual clause
+content: |
   % for obj in all_clause_objects:
   * [${ obj.name }: ${ obj.full_name }](${obj.url})
       * Last modified at ${ format_date(obj.modified_time) }
   % endfor
-continue button field: review_before_download
-continue button label: Compile my files into a Word document
 ---
 event: no_clauses_found
 question: | 
@@ -335,6 +308,16 @@ question: |
   We're compiling your documents
 subquestion: |
   This may take a few minutes, so leave this tab open. Thanks for waiting.
+under: |
+  ## ${ individual_list_template.subject }
+
+  ${ individual_list_template.show() }
+
+  ## ${ tags_to_docs_template.subject }
+
+  ${ tags_to_docs_template.show() }
+
+
 reload: True
 ---
 id: download filled
@@ -345,12 +328,13 @@ comment: |
   Download the [combined document with all of the found clauses](${ the_doc.url_for() }).
 subquestion: |
   [:file-download: Download](${the_doc.url_for(attachment=True)})
-
-  Here is more about the individual clauses that we found.
-  
-  % for obj in all_clause_objects:
-  * [${ obj.name }: ${ obj.full_name }](${obj.url})
-      * Last modified at ${ format_date(obj.modified_time) }
-  % endfor
 buttons:
   - Assemble another document: restart
+under: |
+  ## ${ individual_list_template.subject }
+
+  ${ individual_list_template.show() }
+
+  ## ${ tags_to_docs_template.subject }
+
+  ${ tags_to_docs_template.show() }
