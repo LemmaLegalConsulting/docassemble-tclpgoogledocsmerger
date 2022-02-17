@@ -16,7 +16,7 @@ __all__ = ['word_to_markdown',
 def download_drive_docx_wrapper(
     file_ids:Union[str, Iterable[str]],
     filename_base:str, 
-    export_to_docx:bool=False, 
+    export_to_docx:bool=False,
     last_updateds:Union[str, List[str]]=[],
     redis_cache=None
 ):
@@ -99,11 +99,11 @@ def get_folder_id(folder_name) -> str:
   return folder_id
 
 def get_latest_file_for_clause(all_files: List, childs_name:str) -> Optional[str]:
-  child_to_check = childs_name.replace("'", '_').replace('’', '_').lower()
+  child_to_check = childs_name.replace("'", '_').replace('’', '_').replace('&', '_').lower().replace(' and ', ' _ ')
   matching_files = []
   for g_file in all_files:
     file_name = g_file.get('name', '')
-    file_to_check = file_name.replace("'", "_").replace('’', '_').lower()
+    file_to_check = file_name.replace("'", "_").replace('’', '_').replace('&', '_').lower().replace(' and ', ' _ ')
     if file_to_check.lower().startswith(child_to_check) and 'Clause Amendment History'.lower() not in file_to_check:
       matching_files.append(g_file)
   sorted_files = sorted(matching_files, key=lambda l: l.get('name', '').upper(), reverse=True)

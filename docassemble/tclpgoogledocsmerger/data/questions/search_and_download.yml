@@ -67,7 +67,7 @@ code: |
   accept_gdpr_notice
   reconsider('snapshot_interview_state')
   prep_documents
-  if not all_clauses:
+  if not all_clause_names:
     no_clauses_found
   if the_download_task.ready():
     if the_download_task.failed():
@@ -139,7 +139,7 @@ code: |
   # Don't let DA parse nameerrors so that all data is recorded in one block,
   # regardless of how far in interview someone got
   try:
-    stuff_to_snapshot['all_clauses'] = comma_list(all_clauses)
+    stuff_to_snapshot['all_clauses_names'] = comma_list(all_clause_names)
     stuff_to_snapshot['all_clauses_full_names'] = comma_list(f'"{clause.full_name}"' for clause in all_clause_objects)
     stuff_to_snapshot['selected_rows'] = comma_list([row[1]["Child's name"] for row in selected_rows.iterrows()])
     if defined('selected_vals'):
@@ -224,17 +224,14 @@ id: prep documents
 code: |
   url_base_str = 'https://chancerylaneproject.org/climate-clauses/{}'
   gdrive_base_url = 'https://docs.google.com/document/d/{}'
-  all_clause_ids = []
-  all_clauses = []
+  all_clause_names = []
   all_clause_objects = []
   selected_rows = multi_index.get_full_rows(row_ids)
   for row in selected_rows.iterrows():
     g_file = get_latest_file_for_clause(all_files, row[1]["Child's name"])
     if g_file:
-      all_clauses.append(row[1]["Child's name"])
+      all_clause_names.append(row[1]["Child's name"])
       modified_time = g_file.get('modifiedTime')
-      if 'id' in g_file:
-        all_clause_ids.append(g_file.get('id'))
       if row[1].get('Has URL'):
         url = url_base_str.format(row[1].get('URL arg', '').lower().replace(' ', '-').replace('/', '-'))
       else:
@@ -248,6 +245,14 @@ code: |
         docx_link=f'[{full_name}]({url})',
         file_id=g_file.get('id')
       ))
+  # Remove docs from tags_with_rows that weren't found on Drive
+  all_clause_set = set(all_clause_names)
+  initial_tags = list(tags_with_rows.keys())
+  for tag in initial_tags:
+    tags_with_rows[tag] = [row for row in tags_with_rows[tag] if row in all_clause_set]
+    if not tags_with_rows[tag]:
+      tags_with_rows.pop(tag, None)
+  del all_clause_set
   prep_documents = True
 ---
 code: |
