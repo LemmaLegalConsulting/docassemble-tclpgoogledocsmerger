@@ -18,6 +18,6 @@ def merge_docs(template_doc:str, all_docs:List[DAObject], tags_with_rows:Mapping
   tpl.render(context)
   the_file = DAFile()
   the_file.set_random_instance_name()
-  the_file.initialize(filename='final_document.docx')
+  the_file.initialize(filename='tclp_all_clauses.docx')
   tpl.save(the_file.path())
   return the_file
