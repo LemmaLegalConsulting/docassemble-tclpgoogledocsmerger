@@ -55,6 +55,17 @@ actually updating the CSV file. The first step only needs to be done once, per u
   1.2.3-march-data. Change this version number and press save at the bottom of the screen.
 8. Press "Install" at the bottom of the screen. This will cause the server to restart, so avoid updating during peak traffic times.
 
+## Adding new Clauses
+
+For some reason, the documents that we have been starting with have 10's to 100's of DOCX validation errors. These documents will generally open okay in Word or Google Docs on their own, but these validation errors cause problems when working with the open source libraries that we use to combine
+the documents. The easiest way to prevent these validation errors from causing problems is to just
+remove them from the original documents. That process is described below:
+
+1. Download the document from Google Drive or other cloud editor and open locally with Destop Word (works with Word 2019, but later versions probably should too).
+2. Go to File > Save As, and save the file as a Rich Text Format (.rtf), and close Word.
+3. Open the newly saved .rtf file in Word. Go to File > Save As, and now save as a Word Document (DOCX). Make sure that the "Maintain compatability with previous versions of Word" is checked.
+4. (optional) Sometimes, this process causes Word to make the background style of the tables in the document orange. To change this back to a normal white background, move your cursor into the table, and click on the "Design" tab above the ribbon. You should see the orange background in the "Table Styles". Delete it (right click > delete table style) from the document, and click on the desired table style. Save the document.
+5. Upload the corrected DOCX files to the Google Drive folder that this interview is using.
 
 ## Authors
 
