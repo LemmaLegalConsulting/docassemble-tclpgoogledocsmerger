@@ -57,6 +57,8 @@ actually updating the CSV file. The first step only needs to be done once, per u
 
 ## Adding new Clauses
 
+Once a clause is present in the Airtable data (see above), you can add its corresponding DOCX to the Google Drive folder, and it will be found and downloaded by this interview. It's important that the name of the DOCX in the Drive folder have the exact name of the clause somewhere in it, with the same spelling as in the Airtable. Otherwise, it won't be found and downloaded by this interview (ignoring `&` and `'`). For example, if the DOCX's name is "Gilbert _ Sullivan_s Clause - V3", and the Airtable "Child name" is "Gilbert & Sullivan's Clause", that's okay. But if the DOCX's name is "Chris_s Clause - V4" and the Aritable name is "Chris' Clause", it won't be found.
+
 For some reason, the documents that we have been starting with have 10's to 100's of DOCX validation errors. These documents will generally open okay in Word or Google Docs on their own, but these validation errors cause problems when working with the open source libraries that we use to combine
 the documents. The easiest way to prevent these validation errors from causing problems is to just
 remove them from the original documents. That process is described below:
