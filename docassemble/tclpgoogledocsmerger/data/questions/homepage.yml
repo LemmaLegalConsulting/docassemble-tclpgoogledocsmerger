@@ -1,0 +1,13 @@
+metadata:
+  title: Start your clause search
+  temporary session: True
+  hidden: True
+---
+prevent going back: True
+mandatory: True
+question: |
+  Start a clause search
+subquestion: |
+  Search through contractual clauses you can incorporate into law firm precedents and commercial agreements across the world via pratice areas, and categories.
+
+  ${ action_button_html(interview_url(i=user_info().package + ":search_and_download.yml",reset=1), label="Start a new Clause Search") }

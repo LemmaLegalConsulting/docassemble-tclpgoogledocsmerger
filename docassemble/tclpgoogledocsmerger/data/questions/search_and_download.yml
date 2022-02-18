@@ -21,6 +21,7 @@ features:
 metadata:
   title: Choose your climate clauses
   short title: Choose your climate clauses
+  error action: show_failed_screen
   temporary session: True
 ---
 code: |
@@ -89,7 +90,7 @@ event: show_failed_screen
 question: |
   Sorry, something went wrong
 subquestion: |
-  We had some trouble trying to assemble your document.
+  We had some trouble trying to assemble your document. Restarting might help.
 buttons:
   - Restart: restart
 ---
