@@ -23,6 +23,8 @@ metadata:
   short title: Choose your climate clauses
   error action: show_failed_screen
   temporary session: True
+  exit url: apps.chancerylaneproject.org/start/clause_search?reset=1
+  exit label: restart
 ---
 code: |
   separate_column_info = [
