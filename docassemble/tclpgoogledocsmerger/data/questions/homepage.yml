@@ -1,7 +1,15 @@
 metadata:
-  title: Start your clause search
+  title: Start a clause search
   temporary session: True
   hidden: True
+  logo: |
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&amp;family=Source+Serif+Pro:ital,wght@0,400;0,700;1,400&amp;display=swap" rel="stylesheet">
+  exit url: chancerylaneproject.org
+  exit label: Return 
+---
+features:
+  css:
+    - tclp.css
 ---
 prevent going back: True
 mandatory: True
