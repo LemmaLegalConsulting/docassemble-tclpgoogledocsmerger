@@ -2,8 +2,6 @@ metadata:
   title: Start a clause search
   temporary session: True
   hidden: True
-  logo: |
-    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&amp;family=Source+Serif+Pro:ital,wght@0,400;0,700;1,400&amp;display=swap" rel="stylesheet">
   exit url: chancerylaneproject.org
   exit label: Return 
 ---
@@ -18,4 +16,4 @@ question: |
 subquestion: |
   Search through contractual clauses you can incorporate into law firm precedents and commercial agreements across the world via pratice areas, and categories.
 
-  ${ action_button_html(interview_url(i=user_info().package + ":search_and_download.yml",reset=1), label="Start a new Clause Search") }
+  ${ action_button_html(interview_url(i=user_info().package + ":search_and_download.yml",reset=1), label="Start a new Clause Search", color="primary") }
