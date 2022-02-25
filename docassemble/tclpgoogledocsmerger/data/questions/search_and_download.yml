@@ -23,7 +23,7 @@ metadata:
   short title: Choose your climate clauses
   error action: show_failed_screen
   logo: |
-      <a href="https://chancerylaneproject.org"><img src="/packagestatic/docassemble.tclpgoogledocsmerger/white-tclp.svg" alt="TCLP Logo"></a>
+      <a href="https://chancerylaneproject.org"><img src="/packagestatic/docassemble.tclpgoogledocsmerger/white_tclp.svg" alt="TCLP Logo"></a>
   temporary session: True
   exit url: apps.chancerylaneproject.org/start/clause_search?reset=1
   exit label: Restart
