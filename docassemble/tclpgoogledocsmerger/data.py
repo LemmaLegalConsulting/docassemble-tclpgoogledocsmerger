@@ -3,10 +3,10 @@ import pandas as pd
 import numpy as np
 from typing import Dict, List, Optional, Tuple, Mapping
 from docassemble.base.core import DAObject
-from docassemble.base.util import log
+from .airtable import get_airtable
 from functools import reduce
 
-__all__ = ['MultiSelectIndex']
+__all__ = ['create_select_index', 'MultiSelectIndex']
 
 def create_indices(table, cols:List[str], id_col:Optional[str]=None) -> Dict[str, Dict[str, List[str]]]:
   """Given a pandas "base" (from Airtable) and a list of columns / fields to make indices of,
@@ -50,33 +50,44 @@ ColumnQuery = Tuple[str, List[str]]
 
 class MultiSelectIndex(DAObject):
   def init(self, *pargs, **kwargs):
+    """Creates a select index, either using the latest airtable data, using cached airtable data
+    in Redis, or by using the backup downloaded local CSV from airtable.
+    
+    """
     super().init(*pargs, **kwargs)
-    import_path = kwargs.get('import_path', '')
+    airtable_key = kwargs.get('airtable_key', '')
+    redis_cache = kwargs.get('redis_cache', '')
+    csv_path = kwargs.get('csv_path', '')
     url_file_path = kwargs.get('url_file_path')
     cols_with_indices = kwargs.get('cols_with_indices', [])
-    self.table = pd.read_csv(import_path,
-        # Some hardcoded cleaning on the data, particularly lists in columns
-        converters={
-            # Fancy apostrophes are dumb, replace with a normal one
-            "Child's name": lambda y: y.replace('’', "'"),
-            # Clean data in columns with list entries with commas in the strings
-            "Practice Area": split_and_strip, 
-            "COP26 Net Zero Chapter": split_and_strip, 
-            # Split the comma separated lists into actual lists
-            "GIC Industry": split_and_strip,
-            "GIC Industry Group": split_and_strip,
-            "F - Contract Emissions": split_and_strip,
-            "F - Corp Gov": split_and_strip,
-            "F - Reporting & Disclosures": split_and_strip,
-            "F - Corporate Mechanisms": split_and_strip,
-            "F - Organisation emissions": split_and_strip,
-            "F - Incentives, Enforcement, Disputes": split_and_strip,
-            "F - Other environmental function": split_and_strip,
-            "F - Pre-contract": split_and_strip,
-            "F - Just Transition": split_and_strip,
-            "F - Resilience & Adaptation": split_and_strip,
-            "F - Biodiversity": split_and_strip
-        })
+    # Some hardcoded cleaning on the data, particularly lists in columns
+    converters = {
+        # Fancy apostrophes are dumb, replace with a normal one
+        "Child's name": lambda y: y.replace(r'’', "'").strip(),
+        # Clean data in columns with list entries with commas in the strings
+        "Practice Area": split_and_strip, 
+        "COP26 Net Zero Chapter": split_and_strip, 
+        # Split the comma separated lists into actual lists
+        "GIC Industry": split_and_strip,
+        "GIC Industry Group": split_and_strip,
+        "F - Contract Emissions": split_and_strip,
+        "F - Corp Gov": split_and_strip,
+        "F - Reporting & Disclosures": split_and_strip,
+        "F - Corporate Mechanisms": split_and_strip,
+        "F - Organisation emissions": split_and_strip,
+        "F - Incentives, Enforcement, Disputes": split_and_strip,
+        "F - Other environmental function": split_and_strip,
+        "F - Pre-contract": split_and_strip,
+        "F - Just Transition": split_and_strip,
+        "F - Resilience & Adaptation": split_and_strip,
+        "F - Biodiversity": split_and_strip
+    }
+    airtable_table = get_airtable(airtable_key, redis_cache, converters)
+    if airtable_table:
+      self.table = airtable_table
+    else:
+      self.table = pd.read_csv(csv_path, converters=converters)
+
     if url_file_path:
       urls = pd.read_csv(url_file_path)
       self.table = self.table.merge(urls, on="Child's name", how="left")
@@ -142,3 +153,7 @@ class MultiSelectIndex(DAObject):
     values = set(self.table[col_name].explode())
     values.discard(np.nan)
     return sorted(values)
+
+def create_select_index() -> MultiSelectIndex:
+  static_csv_file = DAStaticFile.
+  pass
