@@ -169,20 +169,27 @@ code: |
 ---
 id: search variables
 question: |
-  Build a custom climate clause document
+  Use TCLP's climate clause picker
 subquestion: |
-  Use the search options to create your own custom document with climate-friendly terms you 
-  can use in your contracts.
+  To use this clause picker click on the drop-down arrow on the three categories below and select the practice areas,
+  sectors and climate solutions most relevant to your work.
+
+  The clause picker will select the most relevant clauses, which you can either use online or download as a word document.
 fields:
   - code: select_fields
-  - note: If you want to hear more about our work, leave us your email and we'll reach out.
+  - note: |
+      Submit your email to help us improve how this clause picker works, and receive email updates from The Chancery Lane Project (if not already subscribed).
+      By submitting your email address you consent to TCLP using your information in the ways and for the purposes described in the Privacy Policy.
   - Email (optional): email
     datatype: email
+    required: False
+  - You can mention me and my organization's participation on the website's list of supporters: can_mention_me
+    datatype: yesnoradio
     required: False
   - no label: accept_gdpr_notice
     datatype: checkboxes
     choices:
-      - I have read and understand the [data privacy policy](https://chancerylaneproject.org/privacy-policy/)
+      - I have read and understand the [terms of use](https://chancerylaneproject.org/terms-of-use/) and [data privacy policy](https://chancerylaneproject.org/privacy-policy/)
     minlength: 1
     none of the above: False
     validation messages:
@@ -311,6 +318,12 @@ question: |
   We're compiling your documents
 subquestion: |
   This may take a few minutes, so leave this tab open. Thanks for waiting.
+
+  Since this document might contain many clauses, you should consider using the navigation pane when view it.
+  In Word 2019, you can do this by opening the “View” tab of the ribbon, and checking the “Navigation Pane” checkbox.
+  In LibreOffice, you can press F5 or go to View > Navigator to see the equivalent feature.
+
+  You can find an appendix of the documents based on the tags that you searched by at the end of the document.
 under: |
   ## ${ individual_list_template.subject }
 
@@ -329,6 +342,12 @@ question: |
   Download Your Completed Document
 comment: |
   Download the [combined document with all of the found clauses](${ the_doc.url_for() }).
+
+  Since this document might contain many clauses, you should consider using the navigation pane when view it.
+  In Word 2019, you can do this by opening the “View” tab of the ribbon, and checking the “Navigation Pane” checkbox.
+  In LibreOffice, you can press F5 or go to View > Navigator to see the equivalent feature.
+
+  You can find an appendix of the documents based on the tags that you searched by at the end of the document.
 subquestion: |
   [:file-download: Download](${the_doc.url_for(attachment=True)})
 buttons:
