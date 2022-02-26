@@ -256,6 +256,7 @@ code: |
         name=row[1]["Child's name"],
         full_name=full_name,
         modified_time=modified_time,
+        mimeType=g_file.get('mimeType'),
         url=url,
         docx_link=f'[{full_name}]({url})',
         file_id=g_file.get('id')
@@ -276,9 +277,7 @@ code: |
 event: download_task
 code: |
   all_clauses = action_argument('all_clauses')
-  ids = [obj.file_id for obj in all_clauses]
-  last_updateds = [obj.modified_time for obj in all_clauses]
-  files = download_drive_docx_wrapper(ids, 'doc_', redis_cache=red, last_updateds=last_updateds)
+  files = download_drive_docx_wrapper(all_clauses, 'doc_', redis_cache=red)
   for obj, doc_file in zip(all_clauses, files):
     obj.file = doc_file
   the_doc = merge_docs(template_file.path(), all_clauses, tags_with_rows)
