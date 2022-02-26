@@ -1,6 +1,9 @@
 from docxtpl import DocxTemplate, RichText
 from typing import List, Mapping
 from docassemble.base.util import DAFile, DAObject, format_date, today
+from docassemble.base.pandoc import rtf_to_docx
+
+__all__ = ['merge_docs', 'rtf_as_docx']
 
 def merge_docs(template_doc:str, all_docs:List[DAObject], tags_with_rows:Mapping[str, List[str]]):
   tpl = DocxTemplate(template_doc)
@@ -21,3 +24,6 @@ def merge_docs(template_doc:str, all_docs:List[DAObject], tags_with_rows:Mapping
   the_file.initialize(filename='tclp_all_clauses.docx')
   tpl.save(the_file.path())
   return the_file
+
+def rtf_as_docx(in_file, out_file):
+  return rtf_to_docx(in_file, out_file)

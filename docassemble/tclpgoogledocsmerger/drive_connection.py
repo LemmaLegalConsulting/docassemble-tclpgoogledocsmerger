@@ -4,6 +4,7 @@ import googleapiclient
 from googleapiclient.errors import HttpError
 from typing import List, Iterable, Union, Optional
 from docassemble.base.pandoc import word_to_markdown
+from docassemble.base.util import DAObject
 
 api = DAGoogleAPI()
 __all__ = ['word_to_markdown', 
@@ -14,37 +15,40 @@ __all__ = ['word_to_markdown',
            'get_files_in_folder']
 
 def download_drive_docx_wrapper(
-    file_ids:Union[str, Iterable[str]],
+    clause_objs:Union[DAObject, Iterable[DAObject]], 
     filename_base:str, 
-    export_to_docx:bool=False,
-    last_updateds:Union[str, List[str]]=[],
+    export_as:str='docx',
     redis_cache=None
 ):
   service = api.drive_service()
-  if isinstance(file_ids, str):
-    file_ids = [file_ids]
-  if isinstance(last_updateds, str):
-    last_updateds = [last_updateds]
+  if isinstance(clause_objs, DAObject):
+    clause_objs = [clause_objs]
 
   if filename_base[-5:].lower() == ".docx":
     filename_base = filename_base[:-5]
 
-  return download_drive_docx(service, file_ids, filename_base, export_to_docx, last_updateds=last_updateds, redis_cache=redis_cache)
+  return download_drive_docx(service, clause_objs, filename_base, export_as, redis_cache=redis_cache)
+
+mime_types = {
+  'gdoc': 'application/vnd.google-apps.document',
+  'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'rtf': 'application/rtf'
+}
 
 def download_drive_docx(
     service, 
-    file_ids:Iterable[str],
+    clause_objs:Iterable[DAObject],
     filename_base:str, 
-    export_to_docx:bool=False,
-    last_updateds:List[str]=[],
+    export_as:str='docx',
     redis_cache=None
 ):
   done_files = []
-  for idx, file_id in enumerate(file_ids):
-    if redis_cache and last_updateds:
+  for idx, clause_obj in enumerate(clause_objs):
+    file_id = clause_obj.file_id
+    last_updated = clause_obj.modified_time
+    if redis_cache and last_updated:
       redis_key = redis_cache.key(file_id)
       existing_data = redis_cache.get_data(redis_key)
-      last_updated = last_updateds[idx]
       if existing_data and 'contents' in existing_data and existing_data.get('last_updated') >= last_updated:
         try:
           existing_data.get('contents').retrieve()
@@ -61,15 +65,21 @@ def download_drive_docx(
     the_file = DAFile()
     the_file.gdrive_file_id = file_id
     the_file.set_random_instance_name()
-    the_file.initialize(filename=f'{filename_base}_{idx}.docx')
+    the_file.initialize(filename=f'{filename_base}_{idx}.{export_as}')
     the_file.set_attributes(private=False, persistent=True)
     with open(the_file.path(), 'wb') as fh:
       try:
-        if export_to_docx:
+        if export_as == 'rtf':
+          log('Exporting as rtf')
           response = service.files().export_media(fileId=file_id, 
-              mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
-        else:
+              mimeType=mime_types['rtf'])
+        elif mimeType == mime_type['docx'] and export_as == 'docx':
+          log('exporting as docx from docx!')
           response = service.files().get_media(fileId=file_id)
+        else: # mimeType is gdoc
+          log('exporting from gdoc to ' + export_as)
+          response = service.files().export_media(fileId=file_id,
+              mimeType=mime_types[export_as])
         downloader = googleapiclient.http.MediaIoBaseDownload(fh, response)
         done = False
         while done is False:
@@ -127,7 +137,7 @@ def get_files_in_folder(folder_name:str=None, folder_id:str=None):
     while True:
       # More metadata about the files in https://developers.google.com/drive/api/v3/reference/files
       response = service.files().list(spaces="drive", 
-          fields="nextPageToken, files(id, name, modifiedTime)", 
+          fields="nextPageToken, files(id, name, mimeType, modifiedTime)", 
           q=f"trashed=false and '{folder_id}' in parents",
           pageToken=page_token).execute()
       for the_file in response.get('files', []):
