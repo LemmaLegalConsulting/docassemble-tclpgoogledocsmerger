@@ -1,14 +1,12 @@
 from docassemble.base.util import DAGoogleAPI, DAFile, log
-from docassemble.base.functions import currency
 import googleapiclient
 from googleapiclient.errors import HttpError
 from typing import List, Iterable, Union, Optional
-from docassemble.base.pandoc import word_to_markdown
+
 from docassemble.base.util import DAObject
 
 api = DAGoogleAPI()
-__all__ = ['word_to_markdown', 
-           'download_drive_docx',
+__all__ = ['download_drive_docx',
            'download_drive_docx_wrapper',
            'get_folder_id',
            'get_latest_file_for_clause',
@@ -73,7 +71,7 @@ def download_drive_docx(
           log('Exporting as rtf')
           response = service.files().export_media(fileId=file_id, 
               mimeType=mime_types['rtf'])
-        elif mimeType == mime_type['docx'] and export_as == 'docx':
+        elif clause_obj.mimeType == mime_types['docx'] and export_as == 'docx':
           log('exporting as docx from docx!')
           response = service.files().get_media(fileId=file_id)
         else: # mimeType is gdoc
@@ -90,8 +88,8 @@ def download_drive_docx(
     if the_file:
       the_file.commit()
     done_files.append(the_file)
-    if the_file and redis_cache and last_updateds:
-      new_data = {'last_updated': last_updateds[idx], 'contents': the_file}
+    if the_file and redis_cache and last_updated:
+      new_data = {'last_updated': last_updated, 'contents': the_file}
       redis_cache.set_data(redis_key, new_data)
   return done_files
   
