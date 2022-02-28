@@ -3,3 +3,4 @@
 .~lock*
 *.egg-info/**
 experiments/**
+.env
