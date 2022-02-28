@@ -23,7 +23,7 @@ metadata:
   short title: Choose your climate clauses
   error action: show_failed_screen
   logo: |
-      <a href="https://chancerylaneproject.org"><img src="/packagestatic/docassemble.tclpgoogledocsmerger/white_tclp.svg" alt="TCLP Logo"></a>
+      <a href="https://chancerylaneproject.org"><img src="/packagestatic/docassemble.tclpgoogledocsmerger/white_tclp.svg" alt="TCLP Logo" width="151" height="40"></a>
   temporary session: True
   exit url: apps.chancerylaneproject.org/start/clause_search?reset=1
   exit label: Restart
@@ -164,7 +164,9 @@ code: |
   snapshot_interview_state = True
 ---
 code: |
-  full_clauses_folder_id = get_config("drive_doc_bank", "1-_w_seyUBhzSBb7h9KSz4cA5Z4e24WS1") # rtf'd
+  full_clauses_folder_id = get_config("drive doc bank")
+  log(f'Getting clauses from: {full_clauses_folder_id}')
+  # "1-_w_seyUBhzSBb7h9KSz4cA5Z4e24WS1") # rtf'd
   # "1QNQG3ToIOJ5p3PjC6cPlKgz3nXK3OYJG" #ian's
   # "1YDT_u4AJMzwJKNcAH2naYHhycNd-iHvt" #original
   all_files = get_files_in_folder(folder_id=full_clauses_folder_id)
@@ -323,7 +325,7 @@ question: |
 subquestion: |
   This may take a few minutes, so leave this tab open. Thanks for waiting.
 
-  Since this document might contain many clauses, you should consider using the navigation pane when view it.
+  Since this document might contain many clauses, you should consider using the navigation pane when viewing it.
   In Word 2019, you can do this by opening the “View” tab of the ribbon, and checking the “Navigation Pane” checkbox.
   In LibreOffice, you can press F5 or go to View > Navigator to see the equivalent feature.
 
@@ -337,23 +339,20 @@ under: |
 
   ${ tags_to_docs_template.show() }
 
-
 reload: True
 ---
 id: download filled
 event: download_filled
 question: |
   Download Your Completed Document
-comment: |
-  Download the [combined document with all of the found clauses](${ the_doc.url_for() }).
+subquestion: |
+  Download the [:file-download: combined document with all of the found clauses](${ the_doc.url_for(attachment=True) }).
 
-  Since this document might contain many clauses, you should consider using the navigation pane when view it.
+  Since this document might contain many clauses, you should consider using the navigation pane when viewing it.
   In Word 2019, you can do this by opening the “View” tab of the ribbon, and checking the “Navigation Pane” checkbox.
   In LibreOffice, you can press F5 or go to View > Navigator to see the equivalent feature.
 
   You can find an appendix of the documents based on the tags that you searched by at the end of the document.
-subquestion: |
-  [:file-download: Download](${the_doc.url_for(attachment=True)})
 buttons:
   - Assemble another document: restart
 under: |
