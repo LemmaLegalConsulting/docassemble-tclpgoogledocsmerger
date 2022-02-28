@@ -1,6 +1,14 @@
 """A script that does the manual conversion process of our docs automatically. Takes ~15 minutes.
 TODO(brycew): Robin's doesn't quite work, it's too big as an RTF for some reason.
 
+To Install:
+1. Install python on Windows: https://www.python.org/downloads/windows/
+   (remember to put python on the PATH so you can call `python` from shell or powershell)
+2. Install pywin: https://pypi.org/project/pywin32/
+3. Install the google python libraries: `pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib`
+4. Create Google Credentials and download to this directory with the filename "credentials.json"
+5. Run the script with `python -m windows_validation_converter C:\\Users\\Full\\Path\\To\\Documents\\Dir
+
 Sources: 
 * https://stackoverflow.com/a/65724761
 * https://developers.google.com/drive/api/v3/manage-uploads#python
