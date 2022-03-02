@@ -173,12 +173,9 @@ code: |
 ---
 id: search variables
 question: |
-  Use TCLP's climate clause picker
+  Choose Climate Clauses
 subquestion: |
-  To use this clause picker click on the drop-down arrow on any of the three categories below and select the practice areas,
-  sectors or climate solutions most relevant to your work.
-
-  The clause picker will pick the most relevant clauses to all of your selections, which you can either use online or download as a word document.
+  The clause picker will create a bundle of your clauses to use online or to download as a Word (DOCX) document.
 fields:
   - code: select_fields
   - no label: accept_gdpr_notice
