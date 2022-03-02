@@ -1,12 +1,4 @@
-metadata:
-  title: Start a clause search
-  temporary session: True
-  hidden: True
-  exit url: https://chancerylaneproject.org
-  exit label: Return
----
-prevent going back: True
 mandatory: True
 code: |
   url = interview_url(i=user_info().package + ":search_and_download.yml",reset=1)
-  command('exit', url=url)
+  response(url=url)

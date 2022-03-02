@@ -187,7 +187,7 @@ fields:
     validation messages:
       minlength: |
         You need to accept the data privacy policy to continue.
-  - I would like to improve how this clause picker works and recieve email updates from the The Chancery Lane Project: submitting_email
+  - I would like to improve how this clause picker works and receive email updates from the The Chancery Lane Project: submitting_email
     datatype: yesnowide
     required: False
   - Email: email
