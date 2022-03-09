@@ -179,23 +179,22 @@ subquestion: |
   The clause picker will create a bundle of your clauses to use online or to download as a Word (DOCX) document.
 fields:
   - code: select_fields
+  - I would like to improve how this clause picker works and receive email updates from the The Chancery Lane Project: submitting_email
+    datatype: yesnowide
+    required: False
   - no label: accept_gdpr_notice
     datatype: checkboxes
     choices:
       - I have read and understand the [terms of use](https://chancerylaneproject.org/terms-of-use/) and [data privacy policy](https://chancerylaneproject.org/privacy-policy/)
     minlength: 1
     none of the above: False
+    show if: submitting_email
     validation messages:
       minlength: |
         You need to accept the data privacy policy to continue.
-  - I would like to improve how this clause picker works and receive email updates from the The Chancery Lane Project: submitting_email
-    datatype: yesnowide
-    required: False
   - Email: email
     datatype: email
     show if: submitting_email
-    note: |
-        By submitting your email address you consent to TCLP using your information in the ways and for the purposes described in the Privacy Policy.
   - You can mention me and my organization's participation on the website's list of supporters: can_mention_me
     datatype: yesnowide
     required: False
