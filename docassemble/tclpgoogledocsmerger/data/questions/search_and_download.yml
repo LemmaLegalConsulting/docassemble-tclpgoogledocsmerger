@@ -168,7 +168,7 @@ code: |
 ---
 code: |
   full_clauses_folder_id = get_config("drive doc bank")
-  log(f'Getting clauses from: {full_clauses_folder_id}')
+  log(f'Getting clauses from Google Drive folder: {full_clauses_folder_id}')
   # "1-_w_seyUBhzSBb7h9KSz4cA5Z4e24WS1") # rtf'd
   all_files = get_files_in_folder(folder_id=full_clauses_folder_id)
 ---
@@ -263,6 +263,7 @@ code: |
       ))
   # Remove docs from tags_with_rows that weren't found on Drive
   all_clause_set = set(all_clause_names)
+  all_clause_map = {clause.name: clause.url for clause in all_clause_objects}
   initial_tags = list(tags_with_rows.keys())
   for tag in initial_tags:
     tags_with_rows[tag] = [row for row in tags_with_rows[tag] if row in all_clause_set]
@@ -295,7 +296,7 @@ content: |
   % for tag, rows in tags_with_rows.items():
   * ${ tag.strip(' -F') }:
   % for row in rows:
-      * ${ row }
+      * [${ row }](${ all_clause_map.get(row) })
   % endfor
   % endfor
 ---
@@ -345,7 +346,7 @@ event: download_filled
 question: |
   Download Your Completed Document
 subquestion: |
-  Download the [:file-download: combined document with all of the found clauses](${ the_doc.url_for(attachment=True) }).
+  ${ action_button_html(the_doc.url_for(attachment=True), label="Download all of relevant clauses in one document", color="primary", size="lg")}
 
   Since this document might contain many clauses, you should consider using the navigation pane when viewing it.
   In Word, you can do this by opening the “View” tab of the ribbon, and checking the “Navigation Pane” checkbox.
