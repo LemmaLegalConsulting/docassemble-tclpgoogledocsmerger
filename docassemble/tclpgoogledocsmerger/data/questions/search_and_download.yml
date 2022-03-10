@@ -68,7 +68,7 @@ id: Main order block
 mandatory: True
 code: |
   snapshot_interview_state
-  accept_gdpr_notice
+  clause_query_params
   reconsider('snapshot_interview_state')
   prep_documents
   if not all_clause_names:
@@ -200,6 +200,7 @@ fields:
     required: False
     show if: submitting_email
 continue button label: Compile these clauses into a Word document
+continue button field: clause_query_params
 validation code: |
    indiv_any_trues = [bool(a_type) and (not isinstance(a_type, list) or a_type.any_true()) for a_type in selected_vals.values()]
    if not any(indiv_any_trues):
