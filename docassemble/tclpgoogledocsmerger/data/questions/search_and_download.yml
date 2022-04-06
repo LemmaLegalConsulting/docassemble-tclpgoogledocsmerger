@@ -176,10 +176,10 @@ id: search variables
 question: |
   Choose Climate Clauses
 subquestion: |
-  The clause picker will create a bundle of your clauses to use online or to download as a Word (DOCX) document.
+  The Climate Clause Selector will create a bundle of your clauses to use online or to download as a Word (DOCX) document.
 fields:
   - code: select_fields
-  - I would like to improve how this clause picker works and receive email updates from the The Chancery Lane Project: submitting_email
+  - I would like to improve the Climate Clause Selector: submitting_email
     datatype: yesnowide
     required: False
   - no label: accept_gdpr_notice
@@ -195,11 +195,11 @@ fields:
   - Email: email
     datatype: email
     show if: submitting_email
-  - You can mention me and my organization's participation on the website's list of supporters: can_mention_me
+  - You can mention me and my organisation's participation on the website's list of supporters: can_mention_me
     datatype: yesnowide
     required: False
     show if: submitting_email
-continue button label: Compile these clauses into a Word document
+continue button label: Download document
 continue button field: clause_query_params
 validation code: |
    indiv_any_trues = [bool(a_type) and (not isinstance(a_type, list) or a_type.any_true()) for a_type in selected_vals.values()]
@@ -216,6 +216,8 @@ script: |
           $("#${ base64.b64encode('combined_selected_vals'.encode()).decode().replace('=', '') } ").multiselect({enableCaseInsensitiveFiltering: true, inheritClass: true, enableClickableOptGroups: true, enableCollapsibleOptGroups: true, collapseOptGroupsByDefault: true});
       });
   </script>
+under: |
+  The Climate Clause Selector has been launched in beta. To help us improve this tool and develop it further, we would be grateful for your feedback. Please contact [humzah.khan@chancerylaneproject.org](mailto:humzah.khan@chancerylaneproject.org) to provide feedback and suggestions for improvements.
 ---
 id: select rows
 code: |
@@ -306,7 +308,7 @@ subject: |
 content: |
   % for obj in all_clause_objects:
   * [${ obj.name }: ${ obj.full_name }](${obj.url})
-      * Last modified at ${ format_date(obj.modified_time) }
+      * Modified on ${ format_date(obj.modified_time, format="d MMMM yyyy") }
   % endfor
 ---
 id: no clauses found
@@ -346,7 +348,7 @@ event: download_filled
 question: |
   Download Your Completed Document
 subquestion: |
-  ${ action_button_html(the_doc.url_for(attachment=True), label="Download all of relevant clauses in one document", color="primary", size="lg")}
+  ${ action_button_html(the_doc.url_for(attachment=True), label="Download your clauses in one document", color="primary", size="lg")}
 
   Since this document might contain many clauses, you should consider using the navigation pane when viewing it.
   In Word, you can do this by opening the “View” tab of the ribbon, and checking the “Navigation Pane” checkbox.
