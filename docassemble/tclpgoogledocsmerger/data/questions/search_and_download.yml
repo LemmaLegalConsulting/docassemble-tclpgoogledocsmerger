@@ -3,7 +3,6 @@ include:
     - docassemble.ALToolbox:collapse_template.yml
 ---
 imports:
-  - mammoth
   - base64
 ---
 modules:
@@ -31,8 +30,8 @@ metadata:
 code: |
   separate_column_info = [
     ('Practice Area', 'Practice Area', '', False),
-    ('GIC Industry', 'Sector', 'https://en.wikipedia.org/wiki/Global_Industry_Classification_Standard', False),
-    #('GIC Industry Group', 'GIC Industry Group', 'https://en.wikipedia.org/wiki/Global_Industry_Classification_Standard', False),
+    ('GIC Industry', 'Sector', '[More info here](https://en.wikipedia.org/wiki/Global_Industry_Classification_Standard)', False),
+    #('GIC Industry Group', 'GIC Industry Group', '[More info here](https://en.wikipedia.org/wiki/Global_Industry_Classification_Standard)', False),
     #('COP26 Net Zero Chapter', 'COP26 Net Zero Chapter', '', False),
   ]
   combined_column_info = [
@@ -69,7 +68,7 @@ id: Main order block
 mandatory: True
 code: |
   snapshot_interview_state
-  accept_gdpr_notice
+  clause_query_params
   reconsider('snapshot_interview_state')
   prep_documents
   if not all_clause_names:
@@ -111,18 +110,22 @@ code: |
   select_fields.append(
         {'label': 'Climate Solutions', 'field': f'combined_selected_vals', 
          'datatype': 'multiselect',
-         'required': False, 'code': 'all_combined_vals' })
+         'required': False, 
+         'code': 'all_combined_vals',
+         'help': """Climate solutions are the mechanisms in TCLP climate clauses that address the climate impact of a transaction. For example, the clauses require parties to set emission reduction targets, take specific actions to reduce or avoid emissions and to report on emissions.
+
+    The clauses may tailor these solutions to a specific sector but it is helpful to be able to search by solution as, once you have decided the solution that suits your own circumstances, you can adapt existing clauses to a different sector or jurisdiction."""})
 
   # Then the GIC Industry and Practice area
   vals_for_columns = {}
   selected_vals = {}
-  for col, label, help_link, is_top_level in separate_column_info:
+  for col, label, tooltip, is_top_level in separate_column_info:
     vals_for_columns[col] = multi_index.get_values(col)
     field_info = {'label': label, 'field': f'selected_vals["{col}"]', 
                   'datatype': 'multiselect', 
                   'required': False, 'code': f'vals_for_columns["{col}"]'}
-    if help_link:
-      field_info['help'] = f'[More info here]({help_link})'
+    if tooltip:
+      field_info['help'] = tooltip 
     select_fields.append(field_info)
 ---
 code: |
@@ -165,10 +168,8 @@ code: |
 ---
 code: |
   full_clauses_folder_id = get_config("drive doc bank")
-  log(f'Getting clauses from: {full_clauses_folder_id}')
+  log(f'Getting clauses from Google Drive folder: {full_clauses_folder_id}')
   # "1-_w_seyUBhzSBb7h9KSz4cA5Z4e24WS1") # rtf'd
-  # "1QNQG3ToIOJ5p3PjC6cPlKgz3nXK3OYJG" #ian's
-  # "1YDT_u4AJMzwJKNcAH2naYHhycNd-iHvt" #original
   all_files = get_files_in_folder(folder_id=full_clauses_folder_id)
 ---
 id: search variables
@@ -178,28 +179,28 @@ subquestion: |
   The clause picker will create a bundle of your clauses to use online or to download as a Word (DOCX) document.
 fields:
   - code: select_fields
+  - I would like to improve how this clause picker works and receive email updates from the The Chancery Lane Project: submitting_email
+    datatype: yesnowide
+    required: False
   - no label: accept_gdpr_notice
     datatype: checkboxes
     choices:
       - I have read and understand the [terms of use](https://chancerylaneproject.org/terms-of-use/) and [data privacy policy](https://chancerylaneproject.org/privacy-policy/)
     minlength: 1
     none of the above: False
+    show if: submitting_email
     validation messages:
       minlength: |
         You need to accept the data privacy policy to continue.
-  - I would like to improve how this clause picker works and receive email updates from the The Chancery Lane Project: submitting_email
-    datatype: yesnowide
-    required: False
   - Email: email
     datatype: email
     show if: submitting_email
-    note: |
-        By submitting your email address you consent to TCLP using your information in the ways and for the purposes described in the Privacy Policy.
   - You can mention me and my organization's participation on the website's list of supporters: can_mention_me
     datatype: yesnowide
     required: False
     show if: submitting_email
 continue button label: Compile these clauses into a Word document
+continue button field: clause_query_params
 validation code: |
    indiv_any_trues = [bool(a_type) and (not isinstance(a_type, list) or a_type.any_true()) for a_type in selected_vals.values()]
    if not any(indiv_any_trues):
@@ -262,6 +263,7 @@ code: |
       ))
   # Remove docs from tags_with_rows that weren't found on Drive
   all_clause_set = set(all_clause_names)
+  all_clause_map = {clause.name: clause.url for clause in all_clause_objects}
   initial_tags = list(tags_with_rows.keys())
   for tag in initial_tags:
     tags_with_rows[tag] = [row for row in tags_with_rows[tag] if row in all_clause_set]
@@ -294,7 +296,7 @@ content: |
   % for tag, rows in tags_with_rows.items():
   * ${ tag.strip(' -F') }:
   % for row in rows:
-      * ${ row }
+      * [${ row }](${ all_clause_map.get(row) })
   % endfor
   % endfor
 ---
@@ -307,6 +309,7 @@ content: |
       * Last modified at ${ format_date(obj.modified_time) }
   % endfor
 ---
+id: no clauses found
 event: no_clauses_found
 question: | 
   No matching clauses found.
@@ -323,7 +326,7 @@ subquestion: |
   This may take a few minutes, so leave this tab open. Thanks for waiting.
 
   Since this document might contain many clauses, you should consider using the navigation pane when viewing it.
-  In Word 2019, you can do this by opening the “View” tab of the ribbon, and checking the “Navigation Pane” checkbox.
+  In Word, you can do this by opening the “View” tab of the ribbon, and checking the “Navigation Pane” checkbox.
   In LibreOffice, you can press F5 or go to View > Navigator to see the equivalent feature.
 
   You can find an appendix of the documents based on the tags that you searched by at the end of the document.
@@ -343,10 +346,10 @@ event: download_filled
 question: |
   Download Your Completed Document
 subquestion: |
-  Download the [:file-download: combined document with all of the found clauses](${ the_doc.url_for(attachment=True) }).
+  ${ action_button_html(the_doc.url_for(attachment=True), label="Download all of relevant clauses in one document", color="primary", size="lg")}
 
   Since this document might contain many clauses, you should consider using the navigation pane when viewing it.
-  In Word 2019, you can do this by opening the “View” tab of the ribbon, and checking the “Navigation Pane” checkbox.
+  In Word, you can do this by opening the “View” tab of the ribbon, and checking the “Navigation Pane” checkbox.
   In LibreOffice, you can press F5 or go to View > Navigator to see the equivalent feature.
 
   You can find an appendix of the documents based on the tags that you searched by at the end of the document.
