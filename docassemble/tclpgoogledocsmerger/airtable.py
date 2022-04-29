@@ -12,6 +12,8 @@ def get_airtable(
 ) -> Optional[pd.DataFrame]:
   """Gets the airtable into the same dataframe that we would read it from a CSV"""
   just_rows = get_airtable_or_cache(airtable_key, redis_cache)
+  if not just_rows:
+    return None
   df = pd.DataFrame(just_rows)
   for col_name in converters.keys():
     df[col_name] = df[col_name].apply(converters[col_name])
