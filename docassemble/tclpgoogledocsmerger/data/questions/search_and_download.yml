@@ -51,18 +51,18 @@ code: |
   combined_columns = [a for a, _, _, _ in combined_column_info]
   selectable_columns = separate_columns + combined_columns
 ---
+mandatory: True
+objects:
+  - red: DARedis
+---
 objects: 
   - filled_template: DADict
-  - multi_index: MultiSelectIndex.using(import_path=grid_file.path(), url_file_path=url_file.path(), cols_with_indices=selectable_columns)
+  - multi_index: MultiSelectIndex.using(airtable_key=get_config('airtable api key'), redis_cache=red, csv_path=grid_file.path(), url_file_path=url_file.path(), cols_with_indices=selectable_columns)
 ---
 objects:
   - grid_file: DAStaticFile.using(filename='data/sources/Grid_view.csv')
   - url_file: DAStaticFile.using(filename='data/sources/clause_to_url.csv')
   - template_file: DAStaticFile.using(filename='data/templates/ClausesTemplate_fixed.docx')
----
-mandatory: True
-objects:
-  - red: DARedis
 ---
 id: Main order block
 mandatory: True
