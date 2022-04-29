@@ -2,11 +2,11 @@ import re
 import pandas as pd
 import numpy as np
 from typing import Dict, List, Optional, Tuple, Mapping
-from docassemble.base.core import DAObject
+from docassemble.base.util import DAObject, DAEmpty
 from .airtable import get_airtable
 from functools import reduce
 
-__all__ = ['create_select_index', 'MultiSelectIndex']
+__all__ = ['MultiSelectIndex']
 
 def create_indices(table, cols:List[str], id_col:Optional[str]=None) -> Dict[str, Dict[str, List[str]]]:
   """Given a pandas "base" (from Airtable) and a list of columns / fields to make indices of,
@@ -44,6 +44,8 @@ def _create_index(table, col:str, id_col:str=None) -> Dict[str, List[str]]:
 comma_outside_quotes = re.compile(r'(?!\B"[^"]*),(?![^"]*"\B)')
 
 def split_and_strip(list_str):
+  if not isinstance(list_str, str):
+    return []
   return [entry.strip().strip('"') for entry in comma_outside_quotes.split(list_str) if entry.strip()]
 
 ColumnQuery = Tuple[str, List[str]]
@@ -56,9 +58,9 @@ class MultiSelectIndex(DAObject):
     """
     super().init(*pargs, **kwargs)
     airtable_key = kwargs.get('airtable_key', '')
-    redis_cache = kwargs.get('redis_cache', '')
+    redis_cache = kwargs.get('redis_cache', DAEmpty)
     csv_path = kwargs.get('csv_path', '')
-    url_file_path = kwargs.get('url_file_path')
+    url_file_path = kwargs.get('url_file_path', '')
     cols_with_indices = kwargs.get('cols_with_indices', [])
     # Some hardcoded cleaning on the data, particularly lists in columns
     converters = {
@@ -82,8 +84,8 @@ class MultiSelectIndex(DAObject):
         "F - Resilience & Adaptation": split_and_strip,
         "F - Biodiversity": split_and_strip
     }
-    airtable_table = get_airtable(airtable_key, redis_cache, converters)
-    if airtable_table:
+    airtable_table = get_airtable(airtable_key, converters, redis_cache)
+    if airtable_table is not None:
       self.table = airtable_table
     else:
       self.table = pd.read_csv(csv_path, converters=converters)
@@ -153,7 +155,3 @@ class MultiSelectIndex(DAObject):
     values = set(self.table[col_name].explode())
     values.discard(np.nan)
     return sorted(values)
-
-def create_select_index() -> MultiSelectIndex:
-  static_csv_file = DAStaticFile.
-  pass
