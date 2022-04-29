@@ -26,7 +26,7 @@ def get_airtable_or_cache(airtable_key:str, redis_cache=None) -> List:
     redis_key = redis_cache.key('clause_airtable')
     existing_data = redis_cache.get_data(redis_key)
     if existing_data and 'contents' in existing_data \
-        and existing_data.get('last_updated') > current_datetime() + date_interval(hours=1):
+        and existing_data.get('last_updated') + date_interval(hours=1) > current_datetime():
       return existing_data['contents']
     else:
       log('Invalidating clause_airtable cache')
