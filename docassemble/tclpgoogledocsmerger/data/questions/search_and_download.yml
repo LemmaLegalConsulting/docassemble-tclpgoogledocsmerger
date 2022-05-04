@@ -55,9 +55,14 @@ mandatory: True
 objects:
   - red: DARedis
 ---
-objects: 
+objects:
   - filled_template: DADict
-  - multi_index: MultiSelectIndex.using(airtable_key=get_config('airtable api key'), redis_cache=red, csv_path=grid_file.path(), url_file_path=url_file.path(), cols_with_indices=selectable_columns)
+  - multi_index: |
+      MultiSelectIndex.using(
+          airtable_info=get_config('docs airtable'),
+          redis_cache=red, csv_path=grid_file.path(),
+          url_file_path=url_file.path(),
+          cols_with_indices=selectable_columns)
 ---
 objects:
   - grid_file: DAStaticFile.using(filename='data/sources/Grid_view.csv')

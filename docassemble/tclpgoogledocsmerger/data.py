@@ -2,7 +2,7 @@ import re
 import pandas as pd
 import numpy as np
 from typing import Dict, List, Optional, Tuple, Mapping
-from docassemble.base.util import DAObject, DAEmpty
+from docassemble.base.util import DAObject, DAEmpty, log
 from .airtable import get_airtable
 from functools import reduce
 
@@ -57,7 +57,7 @@ class MultiSelectIndex(DAObject):
     
     """
     super().init(*pargs, **kwargs)
-    airtable_key = kwargs.get('airtable_key', '')
+    airtable_info = kwargs.get('airtable_info')
     redis_cache = kwargs.get('redis_cache', DAEmpty)
     csv_path = kwargs.get('csv_path', '')
     url_file_path = kwargs.get('url_file_path', '')
@@ -84,10 +84,11 @@ class MultiSelectIndex(DAObject):
         "F - Resilience & Adaptation": split_and_strip,
         "F - Biodiversity": split_and_strip
     }
-    airtable_table = get_airtable(airtable_key, converters, redis_cache)
+    airtable_table = get_airtable(airtable_base, airtable_key, converters, redis_cache)
     if airtable_table is not None:
       self.table = airtable_table
     else:
+      log(f'Falling back to reading clause info from CSV at {csv_path}')
       self.table = pd.read_csv(csv_path, converters=converters)
 
     if url_file_path:

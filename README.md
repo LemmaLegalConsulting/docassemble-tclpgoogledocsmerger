@@ -13,12 +13,28 @@ Special dependencies:
 * a branch of [docassemble that supports optgroups](https://github.com/BryceStevenWilley/docassemble/tree/optgroups)
   * also includes a [PR that prevents DA from crashing on newer versions of docxtpl](https://github.com/jhpyle/docassemble/pull/504), which the previous branch includes
 
-## Refreshing the Airtable Data Source.
+## Airtable Config
 
-This interview uses the data in [an Airtable](https://airtable.com/shr5ITqr8fOECQthj/tblZduZJJkNz9tbzY), exported to a CSV file, to
+This interview uses the data in [an Airtable](https://airtable.com/shr5ITqr8fOECQthj/tblZduZJJkNz9tbzY), to
 determine which clause applies to a particular query.
 
-There are two parts to updating this data source: setting up a way to modify the installed interview on a server, and
+In your docassemble configuration, you should add the following YAML dictionary, replacing the example values on the right with your Airtable information:
+
+```yaml
+docs airtable:
+  api key: keyabcDEF12345678
+  base id: appabcDEF12345678
+  table name: "Grid View"
+```
+
+If there are issues connecting to the Airtable, those issues will be
+printed in the [docassemble logs](https://docassemble.org/docs/admin.html#logs).
+
+## Refreshing the Airtable Data Source.
+
+If Airtable is down or you haven't configured Airtable correctly, this interview will use a CSV backup of the information in the airtable, saved in this repository.
+
+In the rare case that you need to update, you will need to do two things: setting up a way to modify the installed interview on a server, and
 actually updating the CSV file. The first step only needs to be done once, per user per server.
 
 ### Modifying an installed interview
@@ -57,15 +73,15 @@ actually updating the CSV file. The first step only needs to be done once, per u
 
 ## Adding new Clauses
 
-Once a clause is present in the Airtable data (see above), you can add its corresponding DOCX to the Google Drive folder, and it will be found and downloaded by this interview. It's important that the name of the DOCX in the Drive folder have the exact name of the clause somewhere in it, with the same spelling as in the Airtable. Otherwise, it won't be found and downloaded by this interview (ignoring `&` and `'`). For example, if the DOCX's name is "Gilbert _ Sullivan_s Clause - V3", and the Airtable "Child name" is "Gilbert & Sullivan's Clause", that's okay. But if the DOCX's name is "Chris_s Clause - V4" and the Aritable name is "Chris' Clause", it won't be found.
+Once a clause is present in the Airtable data (see above), you can add its corresponding DOCX to the Google Drive folder, and it will be found and downloaded by this interview. It's important that the name of the DOCX in the Drive folder have the exact name of the clause somewhere in it, with the same spelling as in the Airtable. Otherwise, it won't be found and downloaded by this interview (ignoring `&` and `'`). For example, if the DOCX's name is "Gilbert _ Sullivan_s Clause - V3", and the Airtable "Child name" is "Gilbert & Sullivan's Clause", that's okay. But if the DOCX's name is "Chris_s Clause - V4" and the Airtable name is "Chris' Clause", it won't be found.
 
 For some reason, the documents that we have been starting with have 10's to 100's of DOCX validation errors. These documents will generally open okay in Word or Google Docs on their own, but these validation errors cause problems when working with the open source libraries that we use to combine
 the documents. The easiest way to prevent these validation errors from causing problems is to just
 remove them from the original documents. That process is described below:
 
-1. Download the document from Google Drive or other cloud editor and open locally with Destop Word (works with Word 2019, but later versions probably should too).
+1. Download the document from Google Drive or other cloud editor and open locally with Desktop Word (works with Word 2019, but later versions probably should too).
 2. Go to File > Save As, and save the file as a Rich Text Format (.rtf), and close Word.
-3. Open the newly saved .rtf file in Word. Go to File > Save As, and now save as a Word Document (DOCX). Make sure that the "Maintain compatability with previous versions of Word" is checked.
+3. Open the newly saved .rtf file in Word. Go to File > Save As, and now save as a Word Document (DOCX). Make sure that the "Maintain compatibility with previous versions of Word" is checked.
 4. (optional) Sometimes, this process causes Word to make the background style of the tables in the document orange. To change this back to a normal white background, move your cursor into the table, and click on the "Design" tab above the ribbon. You should see the orange background in the "Table Styles". Delete it (right click > delete table style) from the document, and click on the desired table style. Save the document.
 5. Upload the corrected DOCX files to the Google Drive folder that this interview is using.
 
