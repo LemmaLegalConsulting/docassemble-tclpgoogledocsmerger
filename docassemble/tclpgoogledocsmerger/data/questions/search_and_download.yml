@@ -222,7 +222,7 @@ script: |
       });
   </script>
 under: |
-  The Climate Clause Selector has been launched in beta. To help us improve this tool and develop it further, we would be grateful for your feedback. Please contact [humzah.khan@chancerylaneproject.org](mailto:humzah.khan@chancerylaneproject.org) to provide feedback and suggestions for improvements.
+  The Climate Clause Selector has been launched in beta. It collates into one downloadable document the TCLP clauses published on our website as at 7 April 2022. Clauses published and updated since 7 April 2022 are not yet included in the Climate Clause Selector. We are are working on adding them to the Climate Clause Selector. In the meantime, to help us improve this tool and develop it further, we would be grateful for your feedback. Please contact [humzah.khan@chancerylaneproject.org](mailto:humzah.khan@chancerylaneproject.org) to provide feedback and suggestions for improvements.
 ---
 id: select rows
 code: |
