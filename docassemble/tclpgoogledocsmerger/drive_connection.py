@@ -4,6 +4,7 @@ from googleapiclient.errors import HttpError
 from typing import List, Iterable, Union, Optional
 
 from docassemble.base.util import DAObject
+from .cloudconvert_api import convert_doc
 
 api = DAGoogleAPI()
 __all__ = ['download_drive_docx',
@@ -16,6 +17,7 @@ def download_drive_docx_wrapper(
     clause_objs:Union[DAObject, Iterable[DAObject]], 
     filename_base:str, 
     export_as:str='docx',
+    use_cloudconvert:bool=False,
     redis_cache=None
 ):
   service = api.drive_service()
@@ -25,7 +27,8 @@ def download_drive_docx_wrapper(
   if filename_base[-5:].lower() == ".docx":
     filename_base = filename_base[:-5]
 
-  return download_drive_docx(service, clause_objs, filename_base, export_as, redis_cache=redis_cache)
+  return download_drive_docx(service, clause_objs, filename_base, export_as, 
+      use_cloudconvert=use_cloudconvert, redis_cache=redis_cache)
 
 mime_types = {
   'gdoc': 'application/vnd.google-apps.document',
@@ -38,6 +41,7 @@ def download_drive_docx(
     clause_objs:Iterable[DAObject],
     filename_base:str, 
     export_as:str='docx',
+    use_cloudconvert:bool=False
     redis_cache=None
 ):
   done_files = []
@@ -50,11 +54,11 @@ def download_drive_docx(
       if existing_data and 'contents' in existing_data and existing_data.get('last_updated') >= last_updated:
         try:
           existing_data.get('contents').retrieve()
-          log(f'using cached version of doc with key: {redis_key}')
+          log(f'using cached version of doc {clause_obj.full_name} with key: {redis_key}')
           done_files.append(existing_data.get('contents'))
           continue
         except ex:
-          log(f'failed to use cached version of doc with key: {redis_key}: {ex}')
+          log(f'failed to use cached version of doc {clause_obj.full_name} with key: {redis_key}: {ex}')
           redis_cache.set_data(redis_key, None)
       else:
         log(f'invalidating cache of {redis_key}')
@@ -71,13 +75,16 @@ def download_drive_docx(
           log('Exporting as rtf')
           response = service.files().export_media(fileId=file_id, 
               mimeType=mime_types['rtf'])
+          need_to_convert = False
         elif clause_obj.mimeType == mime_types['docx'] and export_as == 'docx':
           log('exporting as docx from docx!')
           response = service.files().get_media(fileId=file_id)
+          need_to_convert = False
         else: # mimeType is gdoc
           log('exporting from gdoc to ' + export_as)
           response = service.files().export_media(fileId=file_id,
               mimeType=mime_types[export_as])
+          need_to_convert = False
         downloader = googleapiclient.http.MediaIoBaseDownload(fh, response)
         done = False
         while done is False:
@@ -87,6 +94,14 @@ def download_drive_docx(
         the_file = None
     if the_file:
       the_file.commit()
+    if the_file and need_to_convert:
+      if use_cloudconvert:
+        converted_file = convert_doc(the_file.path())
+        if converted_file:
+          the_file = converted_file
+      else:
+        log(f'Warning: {clause_obj.full_name} was download as a gdoc, but cannot convert properly to docx. Might cause issues')
+
     done_files.append(the_file)
     if the_file and redis_cache and last_updated:
       new_data = {'last_updated': last_updated, 'contents': the_file}

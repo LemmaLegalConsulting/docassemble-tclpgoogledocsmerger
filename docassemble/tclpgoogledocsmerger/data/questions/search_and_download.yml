@@ -7,6 +7,7 @@ imports:
 ---
 modules:
   - .drive_connection
+  - .cloudconvert_api
   - .data
   - .merge_docs
 ---
@@ -54,6 +55,9 @@ code: |
 mandatory: True
 objects:
   - red: DARedis
+---
+code: |
+  use_cloudconvert = init_api(api_key=get_config(), sandbox=False)
 ---
 objects:
   - filled_template: DADict
@@ -285,8 +289,9 @@ code: |
 ---
 event: download_task
 code: |
+  use_cloudconvert
   all_clauses = action_argument('all_clauses')
-  files = download_drive_docx_wrapper(all_clauses, 'doc_', redis_cache=red)
+  files = download_drive_docx_wrapper(all_clauses, 'doc_', use_cloudconvert=use_cloudconvert, redis_cache=red)
   for obj, doc_file in zip(all_clauses, files):
     obj.file = doc_file
   the_doc = merge_docs(template_file.path(), all_clauses, tags_with_rows)

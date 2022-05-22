@@ -20,7 +20,7 @@ def merge(all_docs, out_name):
   return
 
 def use_cloudconvert(in_name):
-  cloudconvert.default() 
+  cloudconvert.configure(api_key=os.getenv("CLOUDCONVERT_API_KEY"), sandbox=True) 
 
   job = cloudconvert.Job.create(payload={"tasks": {
     'import-my-file': {
