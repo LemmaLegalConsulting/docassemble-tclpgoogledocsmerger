@@ -26,9 +26,9 @@ def convert_doc(the_file:DAFile) -> Optional[DAFile]:
       },
       convert_id: {
         "operation": "convert",
-        "input", import_id,
+        "input": import_id,
         "input_format": "docx",
-        "output_format", "rtf",
+        "output_format": "rtf",
         "engine": "office",
       },
       convert_back_id: {

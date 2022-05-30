@@ -41,7 +41,7 @@ def download_drive_docx(
     clause_objs:Iterable[DAObject],
     filename_base:str, 
     export_as:str='docx',
-    use_cloudconvert:bool=False
+    use_cloudconvert:bool=False,
     redis_cache=None
 ):
   done_files = []
