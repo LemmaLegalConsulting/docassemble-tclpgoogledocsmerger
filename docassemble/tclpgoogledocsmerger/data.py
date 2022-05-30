@@ -48,6 +48,12 @@ def split_and_strip(list_str):
     return []
   return [entry.strip().strip('"') for entry in comma_outside_quotes.split(list_str) if entry.strip()]
 
+def replace_quote(child_name):
+  """Fancy apostrophes are dumb, replace with a normal one"""
+  if not isinstance(child_name, str):
+    return ""
+  return child_name.replace(r'’', "'").strip(),
+
 ColumnQuery = Tuple[str, List[str]]
 
 class MultiSelectIndex(DAObject):
@@ -64,8 +70,7 @@ class MultiSelectIndex(DAObject):
     cols_with_indices = kwargs.get('cols_with_indices', [])
     # Some hardcoded cleaning on the data, particularly lists in columns
     converters = {
-        # Fancy apostrophes are dumb, replace with a normal one
-        "Child's name": lambda y: y.replace(r'’', "'").strip(),
+        "Child's name": replace_quote, 
         # Clean data in columns with list entries with commas in the strings
         "Practice Area": split_and_strip, 
         "COP26 Net Zero Chapter": split_and_strip, 

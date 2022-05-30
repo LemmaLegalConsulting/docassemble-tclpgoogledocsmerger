@@ -15,6 +15,8 @@ def get_airtable(
   if not just_rows:
     return None
   df = pd.DataFrame(just_rows)
+  df.dropna(subset=["Child's name", "Full name"])
+  df.reset_index(drop=True)
   for col_name in converters.keys():
     df[col_name] = df[col_name].apply(converters[col_name])
   return df
