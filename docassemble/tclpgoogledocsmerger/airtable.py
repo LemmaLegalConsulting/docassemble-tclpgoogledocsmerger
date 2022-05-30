@@ -1,4 +1,3 @@
-import os
 from pyairtable import Table 
 from typing import Mapping, Optional, List
 import pandas as pd
@@ -50,13 +49,39 @@ def get_airtable_or_cache(airtable_info:Mapping[str, str], redis_cache=None) -> 
     else:
       log('Invalidating clause_airtable cache')
       redis_cache.set_data(redis_key, None)
+
+  reference_cols = [
+    ('Practice Area', 'Practice Area'),
+    ('GIC Industry', 'GIC Industry'),
+    ('COP26 Net Zero Chapter', 'COP26 Net Zero Chapter'),
+    ('GIC Industry Group', 'GIC Industry Group'),
+    ('Timeline Main Phase', 'Timeline Main Phase'),
+    ('Timeline Sub-Phase', 'Timeline Sub-Phase'),
+    ('F - Corp Gov', 'F - Corp Gov'),
+    ('F - Reporting & Disclosures', 'F - Reporting & Disclosures'),
+    ('F - Corporate Mechanisms', 'F - Corporate Mechanims'),
+    ('F - Organisation emissions', 'F - Org Emissions'),
+    ('F - Incentives, Enforcement, Disputes', 'F - Incentives & Disincentives, Enforcement, Disputes'),
+    ('F - Other environmental function', 'F - Other environmental function'), 
+    ('F - Pre-contract', 'F - Pre-contract'),
+    ('F - Just Transition', 'F - Just Transition'), 
+    ('F - Resilience & Adaptation', 'F - Resilience & Adaptation'),
+    ('F - Biodiversity', 'F - Biodiversity'), 
+  ]
+  
   try:
     my_airtable = Table(airtable_key, airtable_base, airtable_table) 
     all_table = my_airtable.all()
+    just_rows = [row['fields'] for row in all_table]
+    for col, table_name in reference_cols:
+      t = Table(airtable_key, airtable_base, table_name)
+      name_map = {r["id"]: r["fields"].get("Name") for r in t.all()}
+      for row in just_rows:
+        row[col] = ','.join([name_map.get(val) for val in row.get(col, [])])
   except requests.exceptions.HTTPError as ex:
     log(f'HTTPError when retrieving airtable: {ex}')
     return None
-  just_rows = [row['fields'] for row in all_table]
+
   if redis_cache:
     new_data = {'last_updated': current_datetime(), 'contents': just_rows}
     redis_cache.set_data(redis_key, new_data)
