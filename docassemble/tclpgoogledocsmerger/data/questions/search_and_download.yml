@@ -106,7 +106,7 @@ code: |
   select_fields = []
 
   # The big, combined one
-  combined_selected_vals = DADict('combined_selected_vals')
+  combined_selected_vals = DADict('combined_selected_vals', gathered=True)
   all_combined_vals = []
   for col, label, help_link, is_top_level in combined_column_info:
     all_vals = [{'value': f'{col};;;{item}', 'label': item, 'group': label} for item in multi_index.get_values(col)]
