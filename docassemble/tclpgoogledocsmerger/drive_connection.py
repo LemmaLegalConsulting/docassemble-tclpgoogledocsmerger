@@ -93,7 +93,7 @@ def download_drive_docx(
       redis_cache.set_data(redis_key, new_data)
   return done_files
   
-def get_folder_id(folder_name) -> str:
+def get_folder_id(folder_name) -> Optional[str]:
   try:
     service = api.drive_service()
     resp = service.files().list(spaces="drive", 

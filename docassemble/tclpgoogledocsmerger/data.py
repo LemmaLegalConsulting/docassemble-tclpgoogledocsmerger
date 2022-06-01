@@ -1,7 +1,7 @@
 import re
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Optional, Tuple, Mapping
+from typing import Any, Dict, List, Optional, Set, Tuple, Mapping
 from docassemble.base.util import DAObject, DAEmpty, log
 from .airtable import get_airtable
 from functools import reduce
@@ -19,7 +19,7 @@ def create_indices(table, cols:List[str], id_col:Optional[str]=None) -> Dict[str
 
 def _create_index(table, col:str, id_col:str=None) -> Dict[str, List[str]]:
   """Returns a dict mapping entries in the given column to row ids that had said entry"""
-  index = {}
+  index:Dict[str, List[str]]= {}
   for row_id, col_vals in zip(table[id_col], table[col]):
     if isinstance(col_vals, str):
       col_vals = col_vals.strip()
@@ -52,7 +52,7 @@ def replace_quote(child_name):
   """Fancy apostrophes are dumb, replace with a normal one"""
   if not isinstance(child_name, str):
     return ""
-  return child_name.replace(r'’', "'").strip(),
+  return child_name.replace(r'’', "'").strip()
 
 ColumnQuery = Tuple[str, List[str]]
 
@@ -127,7 +127,7 @@ class MultiSelectIndex(DAObject):
     # Get only the row ids that match all of the column queries
     return sorted(reduce(lambda a, b: a.intersection(b), rows_per_query, next(iter(rows_per_query))))
 
-  def query_with_explainations(self, one_of_each:List[List[ColumnQuery]]) -> Mapping[str, List[str]]:
+  def query_with_explainations(self, one_of_each:List[List[ColumnQuery]]) -> Tuple[Set[Any], Mapping[str, List[str]]]:
     rows_per_query = []
     rows_per_tag = {}
     for col_queries in one_of_each:

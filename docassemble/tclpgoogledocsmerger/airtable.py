@@ -1,12 +1,12 @@
 from pyairtable import Table 
-from typing import Mapping, Optional, List
+from typing import Callable, Mapping, Optional, List
 import pandas as pd
 import requests
 from docassemble.base.util import current_datetime, date_interval, log
 
 def get_airtable(
     airtable_info:Mapping[str, str],
-    converters:Mapping[str, callable],
+    converters:Mapping[str, Callable],
     redis_cache=None,
 ) -> Optional[pd.DataFrame]:
   """Gets the airtable into the same dataframe that we would read it from a CSV"""
@@ -77,7 +77,7 @@ def get_airtable_or_cache(airtable_info:Mapping[str, str], redis_cache=None) -> 
       t = Table(airtable_key, airtable_base, table_name)
       name_map = {r["id"]: r["fields"].get("Name") for r in t.all()}
       for row in just_rows:
-        row[col] = ','.join([name_map.get(val) for val in row.get(col, [])])
+        row[col] = ','.join([name_map.get(val, '') for val in row.get(col, [])])
   except requests.exceptions.HTTPError as ex:
     log(f'HTTPError when retrieving airtable: {ex}')
     return None
