@@ -126,7 +126,7 @@ code: |
   selected_vals = {}
   for col, label, tooltip, is_top_level in separate_column_info:
     vals_for_columns[col] = multi_index.get_values(col)
-    log(f("vals_for_columns[{col}]: {vals_for_columns[col]}")
+    log(f"vals_for_columns[{col}]: {vals_for_columns[col]}")
     field_info = {'label': label, 'field': f'selected_vals["{col}"]', 
                   'datatype': 'multiselect', 
                   'required': False, 'code': f'vals_for_columns["{col}"]'}
