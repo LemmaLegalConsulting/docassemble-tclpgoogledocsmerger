@@ -57,7 +57,7 @@ objects:
   - red: DARedis
 ---
 code: |
-  use_cloudconvert = init_api(api_key=get_config(), sandbox=False)
+  use_cloudconvert = init_api(api_key=get_config('cloud convert api key'), sandbox=False)
 ---
 objects:
   - filled_template: DADict
