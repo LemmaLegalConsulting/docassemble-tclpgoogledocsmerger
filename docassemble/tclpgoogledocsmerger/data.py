@@ -96,6 +96,8 @@ class MultiSelectIndex(DAObject):
       log(f'Falling back to reading clause info from CSV at {csv_path}')
       self.table = pd.read_csv(csv_path, converters=converters)
 
+    self.table.sort_values(by=["Child's name"], inplace=True)
+
     if url_file_path:
       urls = pd.read_csv(url_file_path)
       self.table = self.table.merge(urls, on="Child's name", how="left")
