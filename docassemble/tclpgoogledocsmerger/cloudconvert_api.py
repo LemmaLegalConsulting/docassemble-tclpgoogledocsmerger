@@ -14,7 +14,7 @@ def convert_doc(the_file:DAFile) -> Optional[DAFile]:
     return None
 
   job_id = str(uuid.uuid4())
-  log(f"Cloudconverting {the_file.path()} with job name of {job_id}")
+  log(f"Cloudconverting {the_file.gdrive_file_id} with job name of {job_id}")
   import_id = f"import-{job_id}"
   convert_id = f"convert-{job_id}"
   convert_back_id = f"convert-back-{job_id}"

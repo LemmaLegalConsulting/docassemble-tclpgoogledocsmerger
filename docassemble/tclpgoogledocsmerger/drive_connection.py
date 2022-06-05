@@ -51,7 +51,6 @@ def download_drive_docx(
     file_id = clause_obj.file_id
     last_updated = clause_obj.modified_time
     if redis_cache and last_updated:
-      log(f'trying redis cache for {clause_obj.name}')
       redis_key = redis_cache.key(file_id)
       existing_data = redis_cache.get_data(redis_key)
       if existing_data and 'contents' in existing_data and existing_data.get('last_updated') >= last_updated:
@@ -104,8 +103,10 @@ def download_drive_docx(
         converted_file = convert_doc(the_file)
         if converted_file:
           the_file = converted_file
+        else:
+          log(f"Error: cloud convert process failed on {clause_obj.name}! Trying with the document downloaded")
       else:
-        log(f'Warning: {clause_obj.full_name} was download as a gdoc, but cannot convert properly to docx without cloudconvert. Might cause issues')
+        log(f'Warning: {clause_obj.name} was download as a gdoc, but cannot convert properly to docx without cloudconvert. Might cause issues')
 
     done_files.append(the_file)
     if the_file and redis_cache and last_updated:
