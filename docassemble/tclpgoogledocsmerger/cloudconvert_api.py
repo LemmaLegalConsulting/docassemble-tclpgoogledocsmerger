@@ -9,7 +9,7 @@ def convert_doc(the_file:DAFile) -> Optional[DAFile]:
   """Calls the cloudconvert API to convert a recently GDoc document into rtf, and back to docx,
   to fix merge issues."""
 
-  if get_existing_client() is None:
+  if cloudconvert.get_existing_client() is None:
     log('Not converting files, no client api created. Call init_api')
     return None
 
