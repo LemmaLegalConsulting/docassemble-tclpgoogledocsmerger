@@ -101,7 +101,7 @@ def download_drive_docx(
       the_file.commit()
     if the_file and need_to_convert:
       if use_cloudconvert:
-        converted_file = convert_doc(the_file.path())
+        converted_file = convert_doc(the_file)
         if converted_file:
           the_file = converted_file
       else:
