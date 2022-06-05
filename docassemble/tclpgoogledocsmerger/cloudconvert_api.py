@@ -79,7 +79,7 @@ def convert_doc(the_file:DAFile) -> Optional[DAFile]:
   file_info = export_task.get("result", {}).get("files", [])[0]
 
   converted_file = DAFile()
-  converted_file = set_random_instance_name()
+  converted_file.set_random_instance_name()
   converted_file.initialize(filename=f"converted_{the_file.filename}")
   converted_file.set_attributes(private=False, persistent=True)
   cloudconvert.download(filename=converted_file.path(), url=file_info["url"])
