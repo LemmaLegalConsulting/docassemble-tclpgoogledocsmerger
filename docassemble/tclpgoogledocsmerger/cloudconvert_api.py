@@ -45,7 +45,18 @@ def convert_doc(the_file:DAFile) -> Optional[DAFile]:
     "tag": "docassemble",
   })
 
-  upload_task_id = job['tasks'][0]['id']
+  if not 'tasks' in job:
+    log(f'Expected "tasks" in the job!: {job}')
+    return None
+  if not 'id' in job:
+    log(f'Expected "id" in the job!: {job}')
+    return None
+
+  upload_task_id = job.get('tasks', [{}])[0].get('id')
+  if upload_task_id is None:
+    log(f'upload_task_id is None!: {job}')
+    return None
+
   upload_task = cloudconvert.Task.find(id=upload_task_id)
   res = cloudconvert.Task.upload(file_name=the_file.path(), task=upload_task)
   res = cloudconvert.Task.find(id=upload_task_id)
@@ -53,7 +64,7 @@ def convert_doc(the_file:DAFile) -> Optional[DAFile]:
 
   if "tasks" not in job:
     log(f'Cloudconvert job failed: {job}')
-    return None 
+    return None
 
   export_task = None
   for task in job["tasks"]:
@@ -85,4 +96,5 @@ def init_api(*, api_key:str, sandbox:bool) -> bool:
     log('Not initializing the cloudconvert api: need to pass in api_key')
     return False
   cloudconvert.configure(api_key=api_key, sandbox=sandbox)
+  log('Initialized cloudconvert api!')
   return True
