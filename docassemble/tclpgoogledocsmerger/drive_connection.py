@@ -28,7 +28,7 @@ def download_drive_docx_wrapper(
   if filename_base[-5:].lower() == ".docx":
     filename_base = filename_base[:-5]
 
-  return download_drive_docx(service, clause_objs, filename_base, export_as, 
+  return download_drive_docx(service, clause_objs, filename_base, export_as=export_as,
       use_cloudconvert=use_cloudconvert, redis_cache=redis_cache)
 
 mime_types = {
