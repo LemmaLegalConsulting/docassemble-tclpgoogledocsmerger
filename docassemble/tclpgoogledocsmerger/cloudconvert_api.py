@@ -1,4 +1,5 @@
 import cloudconvert
+from cloudconvert.exceptions.exceptions import ConnectionError
 from docassemble.base.util import DAFile, log
 from typing import Optional
 import uuid
@@ -19,64 +20,68 @@ def convert_doc(the_file:DAFile) -> Optional[DAFile]:
   convert_id = f"convert-{job_id}"
   convert_back_id = f"convert-back-{job_id}"
   export_id = f"export_{job_id}"
-  job = cloudconvert.Job.create(payload={
-    "tasks": {
-      import_id: {
-        "operation": "import/upload",
+  try:
+    job = cloudconvert.Job.create(payload={
+      "tasks": {
+        import_id: {
+          "operation": "import/upload",
+        },
+        convert_id: {
+          "operation": "convert",
+          "input": import_id,
+          "input_format": "docx",
+          "output_format": "rtf",
+          "engine": "office",
+        },
+        convert_back_id: {
+          "operation": "convert",
+          "input": convert_id,
+          "input_format": "rtf",
+          "output_format": "docx",
+        },
+        export_id: {
+          "operation": "export/url",
+          "input": convert_back_id,
+        }
       },
-      convert_id: {
-        "operation": "convert",
-        "input": import_id,
-        "input_format": "docx",
-        "output_format": "rtf",
-        "engine": "office",
-      },
-      convert_back_id: {
-        "operation": "convert",
-        "input": convert_id,
-        "input_format": "rtf",
-        "output_format": "docx",
-      },
-      export_id: {
-        "operation": "export/url",
-        "input": convert_back_id,
-      }
-    },
-    "tag": "docassemble",
-  })
+      "tag": "docassemble",
+    })
 
-  if not 'tasks' in job:
-    log(f'Expected "tasks" in the job!: {job}')
+    if not 'tasks' in job:
+      log(f'Expected "tasks" in the job!: {job}')
+      return None
+    if not 'id' in job:
+      log(f'Expected "id" in the job!: {job}')
+      return None
+
+    upload_task_id = job.get('tasks', [{}])[0].get('id')
+    if upload_task_id is None:
+      log(f'upload_task_id is None!: {job}')
+      return None
+
+    upload_task = cloudconvert.Task.find(id=upload_task_id)
+    res = cloudconvert.Task.upload(file_name=the_file.path(), task=upload_task)
+    res = cloudconvert.Task.find(id=upload_task_id)
+    job = cloudconvert.Job.wait(id=job['id'])
+
+    if "tasks" not in job:
+      log(f'Cloudconvert job failed: {job}')
+      return None
+
+    export_task = None
+    for task in job["tasks"]:
+      if task.get("name") == export_id and task.get("status") == "finished":
+        export_task = task
+        break
+
+    if not export_task:
+      log(f'Could not find export task? {job}')
+      return None 
+
+    file_info = export_task.get("result", {}).get("files", [])[0]
+  except ConnectionError as err:
+    log(f'Cloud convert error: {err}')
     return None
-  if not 'id' in job:
-    log(f'Expected "id" in the job!: {job}')
-    return None
-
-  upload_task_id = job.get('tasks', [{}])[0].get('id')
-  if upload_task_id is None:
-    log(f'upload_task_id is None!: {job}')
-    return None
-
-  upload_task = cloudconvert.Task.find(id=upload_task_id)
-  res = cloudconvert.Task.upload(file_name=the_file.path(), task=upload_task)
-  res = cloudconvert.Task.find(id=upload_task_id)
-  job = cloudconvert.Job.wait(id=job['id'])
-
-  if "tasks" not in job:
-    log(f'Cloudconvert job failed: {job}')
-    return None
-
-  export_task = None
-  for task in job["tasks"]:
-    if task.get("name") == export_id and task.get("status") == "finished":
-      export_task = task
-      break
-
-  if not export_task:
-    log(f'Could not find export task? {job}')
-    return None 
-
-  file_info = export_task.get("result", {}).get("files", [])[0]
 
   converted_file = DAFile()
   converted_file.set_random_instance_name()
