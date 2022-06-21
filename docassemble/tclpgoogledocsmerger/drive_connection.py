@@ -12,7 +12,8 @@ __all__ = ['download_drive_docx',
            'download_drive_docx_wrapper',
            'get_folder_id',
            'get_latest_file_for_clause',
-           'get_files_in_folder']
+           'get_files_in_folder',
+           'download_all_files_in_folder']
 
 def download_drive_docx_wrapper(
     clause_objs:Union[DAObject, Iterable[DAObject]],
@@ -149,7 +150,7 @@ def get_latest_file_for_clause(all_files: List, childs_name:str) -> Optional[str
   else:
     return None
 
-def get_files_in_folder(folder_name:str=None, folder_id:str=None):
+def get_files_in_folder(folder_name:str=None, folder_id:str=None, service=None):
   """Given a folder, get information about all of the files in that folder."""
   if folder_name is None and folder_id is None:
     raise Exception("Need to provide a folder name or an ID, you provided neither")
@@ -157,7 +158,8 @@ def get_files_in_folder(folder_name:str=None, folder_id:str=None):
     folder_id = get_folder_id(folder_name)
     if folder_id is None:
       raise Exception(f"The folder {folder_name} was not found")
-  service = api.drive_service()
+  if service is None:
+    service = api.drive_service()
   items = list()
   page_token = None
   try:
@@ -177,3 +179,22 @@ def get_files_in_folder(folder_name:str=None, folder_id:str=None):
   except HttpError as ex:
     log(f"Could not connect to Google Drive to see files available: {ex}")
     return []
+
+def download_all_files_in_folder(folder_name:str=None, folder_id:str=None,
+    use_cloudconvert:bool=False,
+    redis_cache=None):
+  service = api.drive_service()
+  files = get_files_in_folder(folder_name=folder_name, folder_id=folder_id, service=service)
+  to_return = []
+  gdrive_base_url = 'https://docs.google.com/document/d/{}'
+  for f in files:
+    to_return.append(DAObject(
+        name=f.get('id'),
+        full_name=f.get('id'),
+        modified_time=f.get('modifiedTime'),
+        mimeType=f.get('mimeType'),
+        url=gdrive_base_url.format(f.get('id')),
+        file_id=f.get('id'),
+        docx_link=''))
+  download_drive_docx(service, to_return, 'base_', use_cloudconvert=use_cloudconvert,
+      redis_cache=redis_cache)
