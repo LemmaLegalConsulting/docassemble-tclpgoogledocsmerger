@@ -5,6 +5,7 @@ from typing import List, Iterable, Union, Optional
 
 from docassemble.base.util import DAObject
 from .cloudconvert_api import convert_doc
+from .redis import redis_key
 
 api = DAGoogleAPI()
 __all__ = ['download_drive_docx',
@@ -51,20 +52,27 @@ def download_drive_docx(
     file_id = clause_obj.file_id
     last_updated = clause_obj.modified_time
     if redis_cache and last_updated:
-      redis_key = redis_cache.key(file_id)
-      existing_data = redis_cache.get_data(redis_key)
+      rkey = redis_key('gdoc_' + file_id)
+      existing_data = redis_cache.get_data(rkey)
+      if not existing_data:
+        # An older version of the key, so we can now remove all of the gdocs redis entries
+        rkey = redis_key(file_id)
+        existing_data = redis_cache.get_data(rkey)
+        if not existing_data:
+          # if the older version isn't there either, just use the new key format
+          rkey = redis_key('gdoc_' + file_id)
       if existing_data and 'contents' in existing_data and existing_data.get('last_updated') >= last_updated:
         try:
           existing_data.get('contents').retrieve()
-          log(f'using cached version of doc {clause_obj.name} with key: {redis_key}')
+          log(f'using cached version of doc {clause_obj.name} with key: {rkey}')
           done_files.append(existing_data.get('contents'))
           continue
         except ex:
-          log(f'failed to use cached version of doc {clause_obj.name} with key: {redis_key}: {ex}')
-          redis_cache.set_data(redis_key, None)
+          log(f'failed to use cached version of doc {clause_obj.name} with key: {rkey}: {ex}')
+          redis_cache.set_data(rkey, None)
       else:
-        log(f'invalidating cache of {redis_key}')
-        redis_cache.set_data(redis_key, None)
+        log(f'invalidating cache of {rkey}')
+        redis_cache.set_data(rkey, None)
     else:
       log(f'not using redis cache for {clause_obj.name}: {str(redis_cache)}, {last_updated}')
 
@@ -111,7 +119,7 @@ def download_drive_docx(
     done_files.append(the_file)
     if the_file and redis_cache and last_updated:
       new_data = {'last_updated': last_updated, 'contents': the_file}
-      redis_cache.set_data(redis_key, new_data)
+      redis_cache.set_data(rkey, new_data)
   return done_files
   
 def get_folder_id(folder_name) -> Optional[str]:
