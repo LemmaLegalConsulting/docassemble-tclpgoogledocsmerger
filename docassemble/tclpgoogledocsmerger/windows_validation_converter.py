@@ -7,6 +7,9 @@ To Install:
 2. Install pywin: https://pypi.org/project/pywin32/
 3. Install the google python libraries: `pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib`
 4. Create Google Credentials and download to this directory with the filename "credentials.json"
+4.5 Make a file called env_vars.py, defining two variables SOURCE_DRIVE_FOLDER and TARGET_DRIVE_FOLDER
+  (NOTE: this is relpacing env vars, which don't seem to work the same in windows, and I am not handling
+  separately.)
 5. Run the script with `python -m windows_validation_converter C:\\Users\\Full\\Path\\To\\Documents\\Dir
 
 Sources: 
@@ -29,6 +32,9 @@ import googleapiclient
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from googleapiclient.errors import HttpError
+
+# This might not be defined: write your own if it's not!
+from .env_vars import SOURCE_DRIVE_FOLDER, TARGET_DRIVE_FOLDER
 
 def ConvertRtfToDocx(from_files):
     """convert rtf to docx and embed all pictures in the final document. Windows only"""
@@ -128,10 +134,10 @@ def upload_docs(creds, drive_folder_id, files_to_upload):
 
 
 if __name__ == '__main__':
-    target_dir = sys.argv[1] if len(sys.argv) > 1 else tempfile.TemporaryDirectory()
+    target_dir = sys.argv[1] if len(sys.argv) > 1 else tempfile.TemporaryDirectory().name
     creds = get_creds()
-    download_docs(creds, os.env["SOURCE_DRIVE_FOLDER"], target_dir)
+    download_docs(creds, SOURCE_DRIVE_FOLDER, target_dir)
     print('Starting conversion for docs')
     ConvertRtfToDocx(list(glob.glob(target_dir + r'/*.rtf')))
     print('starting upload')
-    upload_docs(creds, os.env["TARGET_DRIVE_FOLDER"], list(glob.glob(target_dir + r'/*.docx')))
+    upload_docs(creds, TARGET_DRIVE_FOLDER, list(glob.glob(target_dir + r'/*.docx')))
