@@ -133,6 +133,16 @@ subquestion: |
 
   ${ len(red.keys(interview_rkey + ":*")) } keys in the cache now.
 reload: True
----
-# TODO: bryce: interview should be the reoccuring cron job to download
 # https://docassemble.org/docs/background.html#scheduled
+---
+event: cronwaiting
+question: |
+  Ok, cron job should be starting.
+buttons:
+  Leave: leave
+---
+event: cron_daily
+code: |
+  background_action('download_task', None)
+  response()
+---
