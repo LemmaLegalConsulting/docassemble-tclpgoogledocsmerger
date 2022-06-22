@@ -7,6 +7,7 @@ imports:
 ---
 modules:
   - .drive_connection
+  - .cloudconvert_api
   - .data
   - .merge_docs
 ---
@@ -54,6 +55,9 @@ code: |
 mandatory: True
 objects:
   - red: DARedis
+---
+code: |
+  use_cloudconvert = init_api(api_key=get_config('cloud convert api key'), sandbox=False)
 ---
 objects:
   - filled_template: DADict
@@ -126,7 +130,6 @@ code: |
   selected_vals = {}
   for col, label, tooltip, is_top_level in separate_column_info:
     vals_for_columns[col] = multi_index.get_values(col)
-    log(f"vals_for_columns[{col}]: {vals_for_columns[col]}")
     field_info = {'label': label, 'field': f'selected_vals["{col}"]', 
                   'datatype': 'multiselect', 
                   'required': False, 'code': f'vals_for_columns["{col}"]'}
@@ -223,7 +226,7 @@ script: |
       });
   </script>
 under: |
-  The Climate Clause Selector has been launched in beta. It collates into one downloadable document the TCLP clauses published on our website as at 7 April 2022. Clauses published and updated since 7 April 2022 are not yet included in the Climate Clause Selector. We are are working on adding them to the Climate Clause Selector. In the meantime, to help us improve this tool and develop it further, we would be grateful for your feedback. Please contact [humzah.khan@chancerylaneproject.org](mailto:humzah.khan@chancerylaneproject.org) to provide feedback and suggestions for improvements.
+  The Climate Clause Selector has been launched in beta. To help us improve this tool and develop it further, we would be grateful for your feedback. Please contact [humzah.khan@chancerylaneproject.org](mailto:humzah.khan@chancerylaneproject.org) to provide feedback and suggestions for improvements.
 ---
 id: select rows
 code: |
@@ -283,10 +286,14 @@ code: |
 code: |
   the_download_task = background_action('download_task', all_clauses=all_clause_objects)
 ---
+need:
+  - use_cloudconvert
+  - template_file
+  - tags_with_rows
 event: download_task
 code: |
   all_clauses = action_argument('all_clauses')
-  files = download_drive_docx_wrapper(all_clauses, 'doc_', redis_cache=red)
+  files = download_drive_docx_wrapper(all_clauses, 'doc_', use_cloudconvert=use_cloudconvert, redis_cache=red)
   for obj, doc_file in zip(all_clauses, files):
     obj.file = doc_file
   the_doc = merge_docs(template_file.path(), all_clauses, tags_with_rows)

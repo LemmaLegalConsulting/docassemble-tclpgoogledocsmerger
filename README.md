@@ -39,6 +39,14 @@ drive doc bank: "google-drive-folder-id-abc123"
 
 The Google drive folder id should be visible in the URL of the drive folder, after `/u/0/folders/`.
 
+## Cloud Convert Config
+
+```yaml
+cloud convert api key: "myapikeyabc123aoserhc"
+```
+
+For instructions on making a cloud convert API Key, you can visit [this page while logged in](https://cloudconvert.com/dashboard/api/v2/keys).
+
 ## Adding new Clauses
 
 Once a clause is present in the Airtable data (see above), you can add its corresponding DOCX to the Google Drive folder, and it will be found and downloaded by this interview. It's important that the name of the DOCX in the Drive folder have the exact name of the clause somewhere in it, with the same spelling as in the Airtable. Otherwise, it won't be found and downloaded by this interview (ignoring `&` and `'`). For example, if the DOCX's name is "Gilbert _ Sullivan_s Clause - V3", and the Airtable "Child name" is "Gilbert & Sullivan's Clause", that's okay. But if the DOCX's name is "Chris_s Clause - V4" and the Airtable name is "Chris' Clause", it won't be found.

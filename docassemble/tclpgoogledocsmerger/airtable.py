@@ -3,6 +3,7 @@ from typing import Callable, Mapping, Optional, List
 import pandas as pd
 import requests
 from docassemble.base.util import current_datetime, date_interval, log
+from .redis import redis_key
 
 def get_airtable(
     airtable_info:Mapping[str, str],
@@ -11,7 +12,6 @@ def get_airtable(
 ) -> Optional[pd.DataFrame]:
   """Gets the airtable into the same dataframe that we would read it from a CSV"""
   just_rows = get_airtable_or_cache(airtable_info, redis_cache)
-  log(f"get_airtable: just_rows: {just_rows}")
   if not just_rows:
     return None
   df = pd.DataFrame(just_rows)
@@ -42,14 +42,14 @@ def get_airtable_or_cache(airtable_info:Mapping[str, str], redis_cache=None) -> 
   airtable_table = airtable_info['table name']
 
   if redis_cache:
-    redis_key = redis_cache.key('clause_airtable')
-    existing_data = redis_cache.get_data(redis_key)
+    rkey = redis_key('clause_airtable')
+    existing_data = redis_cache.get_data(rkey)
     if existing_data and 'contents' in existing_data \
         and existing_data.get('last_updated') + date_interval(hours=1) > current_datetime():
       return existing_data['contents']
     else:
       log('Invalidating clause_airtable cache')
-      redis_cache.set_data(redis_key, None)
+      redis_cache.set_data(rkey, None)
 
   reference_cols = [
     ('Practice Area', 'Practice Area'),
@@ -74,7 +74,6 @@ def get_airtable_or_cache(airtable_info:Mapping[str, str], redis_cache=None) -> 
     my_airtable = Table(airtable_key, airtable_base, airtable_table) 
     all_table = my_airtable.all()
     just_rows = [row['fields'] for row in all_table]
-    log(f"just_rows pre comboing: {just_rows}")
     for col, table_name in reference_cols:
       t = Table(airtable_key, airtable_base, table_name)
       name_map = {r["id"]: r["fields"].get("Name") for r in t.all()}
@@ -86,6 +85,5 @@ def get_airtable_or_cache(airtable_info:Mapping[str, str], redis_cache=None) -> 
 
   if redis_cache:
     new_data = {'last_updated': current_datetime(), 'contents': just_rows}
-    redis_cache.set_data(redis_key, new_data)
-  log(f"just_rows post comboing: {just_rows}")
+    redis_cache.set_data(rkey, new_data)
   return just_rows

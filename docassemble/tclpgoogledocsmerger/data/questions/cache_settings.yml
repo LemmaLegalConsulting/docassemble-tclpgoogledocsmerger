@@ -1,0 +1,138 @@
+metadata:
+  title: Cache Administration
+  short title: Cache Admin
+  description: |
+    An interview to handle the Airtable and Google docs caches
+  required privlileges:
+    - admin
+---
+modules:
+  - .cloudconvert_api
+  - .drive_connection
+---
+mandatory: True
+objects:
+  - red: DARedis
+---
+code: |
+  use_cloudconvert = init_api(api_key=get_config('cloud convert api key'), sandbox=False)
+---
+code: |
+  interview_rkey = 'docassemble.tclpgoogledocsmerger:data/questions/search_and_download.yml'
+---
+mandatory: True
+code: |
+  main_question
+  if main_question == 'flush_all':
+    all_keys = red.keys(interview_rkey + ':*')
+    if all_keys:
+      red.delete(*all_keys) 
+      success_msg = f'Removed all redis keys under {interview_rkey}'
+      success_event
+    else:
+      failure_msg = 'There are no keys in the cache at the moment'
+      failure_event
+  elif main_question == 'flush_airtable':
+    airtable_rkey = interview_rkey + ':clause_airtable'
+    red.delete(airtable_rkey)
+    success_msg = "Removed the airtable information under the Redis key " + airtable_rkey
+    success_event
+  elif main_question == 'flush_gdocs_all':
+    # Get all of the gdocs keys with a "keys" command to redis
+    gdocs_keys = red.keys(interview_rkey + ':gdoc_*')
+    if gdocs_keys:
+      red.delete(*gdocs_keys) 
+      success_msg = f'Removed all redis keys under {interview_rkey}:gdoc_*'
+      success_event
+    else:
+      failure_msg = 'There are no gdocs in the cache at the moment'
+      failure_event
+  elif main_question == 'flush_gdocs_specific':
+    gdocs_specific
+    existing_data = red.get_data(gdocs_specific)
+    red.delete(gdocs_specific)
+    success_msg = "Removed the Google docs info under the Redis key " + gdocs_specific + ", which was last updated at " + existing_data.get('last_updated')
+    success_event
+  elif main_question == 'download_gdocs_all':
+    if the_download_task.ready():
+      if the_download_task.failed():
+        failure_msg = 'Failed to download all docs'
+        failure_event
+      success_msg = 'Downloaded all docs'
+      success_event
+    else:
+      waiting_screen
+  elif main_question == 'start_gdocs_cron':
+    pass
+---
+question: |
+  Admin Cache Interview
+subquestion: |
+  What option would you like to do?
+fields:
+  no label: main_question
+  datatype: radio
+  choices:
+    - Flush Airtable cache: flush_airtable
+    - Flush Gdocs cache (all): flush_gdocs_all
+    - Flush a specific Google Docs cache: flush_gdocs_specific
+    - Flush all caches: flush_all
+    - Download all Google Docs: download_gdocs_all
+    - Start Google Docs download cronjob: start_gdocs_cron
+help: |
+  By default, the airtable cache is refreshed every hour, and
+  the google docs cache is refreshed every day. This interview
+  lets you manually "flush" (or delete) the server's cache, letting
+  you immediately up the latest available Google Docs and Airtable 
+  information.
+
+  This interview is for server administrators only.
+---
+question: |
+  Specific Gdoc to invalidate
+fields:
+  - no label: gdocs_specific
+    datatype: dropdown
+    code: |
+      red.keys(interview_rkey + ':gdocs_*')
+---
+event: success_event
+question: Success
+subquestion: |
+  ${ success_msg}
+buttons:
+  - Restart: restart
+---
+event: failure_event
+question: Failure
+subquestion: |
+  ${ failure_msg }
+buttons:
+  - Restart: restart
+---
+code: |
+  the_download_task = background_action('download_task')
+---
+event: download_task
+code: |
+  use_cloudconvert
+  all_downloaded = download_all_files_in_folder(folder_id=get_config("drive doc bank"), use_cloudconvert=use_cloudconvert, redis_cache=red)
+  background_response_action('download_resp', all_downloaded=all_downloaded) 
+---
+event: download_resp
+code: |
+  all_downloaded = action_argument('all_downloaded')
+  background_response()
+---
+event: waiting_screen
+id: waiting screen
+question: |
+  Downloading docs
+subquestion: |
+  This may take a few minutes, so leave this tab open. Thanks for waiting.
+
+  ${ len(red.keys(interview_rkey + ":*")) } keys in the cache now.
+reload: True
+---
+# TODO: bryce: interview should be the reoccuring cron job to download
+# https://docassemble.org/docs/background.html#scheduled
