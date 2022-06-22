@@ -1,3 +1,8 @@
+""" A testing script to play with the
+cloud convert API outside of docassemble. Was necessary before a fix was merged upstream 
+that allowed us to manually set env variables.
+"""
+
 import cloudconvert
 from docxtpl import DocxTemplate, RichText
 import os

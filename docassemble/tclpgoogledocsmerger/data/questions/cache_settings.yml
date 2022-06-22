@@ -133,9 +133,6 @@ subquestion: |
 
   ${ len(red.keys(interview_rkey + ":*")) } keys in the cache now.
 reload: True
-# TODO: bryce: screen with options to flush / remove the airtable cache, 
-# one to flush / remove all of the google docs cache, and one to remove
-# a specific google docs cache.
-
-# Additionally, this interview should be the reoccuring cron job to download
-# all google docs for the cache
+---
+# TODO: bryce: interview should be the reoccuring cron job to download
+# https://docassemble.org/docs/background.html#scheduled

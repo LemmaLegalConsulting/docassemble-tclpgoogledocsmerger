@@ -37,13 +37,15 @@ In your docassemble configuration, you should add the following YAML key-value p
 drive doc bank: "google-drive-folder-id-abc123"
 ```
 
+The Google drive folder id should be visible in the URL of the drive folder, after `/u/0/folders/`.
+
 ## Cloud Convert Config
 
 ```yaml
 cloud convert api key: "myapikeyabc123aoserhc"
 ```
 
-The Google drive folder id should be visible in the URL of the drive folder, after `/u/0/folders/`.
+For instructions on making a cloud convert API Key, you can visit [this page while logged in](https://cloudconvert.com/dashboard/api/v2/keys).
 
 ## Adding new Clauses
 
