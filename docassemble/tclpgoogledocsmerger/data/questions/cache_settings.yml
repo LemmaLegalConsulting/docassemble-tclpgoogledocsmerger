@@ -14,6 +14,11 @@ mandatory: True
 objects:
   - red: DARedis
 ---
+mandatory: True
+code: |
+  allow_cron = True
+  multi_user = True
+---
 code: |
   use_cloudconvert = init_api(api_key=get_config('cloud convert api key'), sandbox=False)
 ---
@@ -63,7 +68,7 @@ code: |
     else:
       waiting_screen
   elif main_question == 'start_gdocs_cron':
-    pass
+    cronwaiting
 ---
 question: |
   Admin Cache Interview
@@ -133,8 +138,8 @@ subquestion: |
 
   ${ len(red.keys(interview_rkey + ":*")) } keys in the cache now.
 reload: True
-# https://docassemble.org/docs/background.html#scheduled
 ---
+# https://docassemble.org/docs/background.html#scheduled
 event: cronwaiting
 question: |
   Ok, cron job should be starting.
