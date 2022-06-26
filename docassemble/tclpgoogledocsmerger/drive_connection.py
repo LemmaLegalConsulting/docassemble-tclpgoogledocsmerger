@@ -49,6 +49,7 @@ def download_drive_docx(
     redis_cache=None
 ):
   done_files = []
+  log(f'grabbing {len(clause_objs)} clauses')
   for idx, clause_obj in enumerate(clause_objs):
     file_id = clause_obj.file_id
     last_updated = clause_obj.modified_time
@@ -65,7 +66,7 @@ def download_drive_docx(
       if existing_data and 'contents' in existing_data and existing_data.get('last_updated') >= last_updated:
         try:
           existing_data.get('contents').retrieve()
-          log(f'using cached version of doc {clause_obj.name} with key: {rkey}')
+          # log(f'using cached version of doc {clause_obj.name} with key: {rkey}')
           done_files.append(existing_data.get('contents'))
           continue
         except ex:
@@ -121,6 +122,8 @@ def download_drive_docx(
     if the_file and redis_cache and last_updated:
       new_data = {'last_updated': last_updated, 'contents': the_file}
       redis_cache.set_data(rkey, new_data)
+
+  log(f'grabbed {len(done_files)} clauses')
   return done_files
   
 def get_folder_id(folder_name) -> Optional[str]:
@@ -196,5 +199,5 @@ def download_all_files_in_folder(folder_name:str=None, folder_id:str=None,
         url=gdrive_base_url.format(f.get('id')),
         file_id=f.get('id'),
         docx_link=''))
-  download_drive_docx(service, to_return, 'base_', use_cloudconvert=use_cloudconvert,
+  return download_drive_docx(service, to_return, 'base_', use_cloudconvert=use_cloudconvert,
       redis_cache=redis_cache)

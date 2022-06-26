@@ -122,6 +122,7 @@ event: download_task
 code: |
   use_cloudconvert
   all_downloaded = download_all_files_in_folder(folder_id=get_config("drive doc bank"), use_cloudconvert=use_cloudconvert, redis_cache=red)
+  log(f're-downloaded all {len(all_downloaded)} in the drive')
   background_response_action('download_resp', all_downloaded=all_downloaded) 
 ---
 event: download_resp
