@@ -11,6 +11,10 @@ Special dependencies:
   * also fixes some issues with [abstractNumId uniqueness](https://github.com/BryceStevenWilley/docxcompose/commit/a90e445857dbf61ce5c999bb50b13291b51d7b12)
 * a branch of [docxtpl](https://github.com/LemmaLegalConsulting/docxtpl/tree/subdoc_bookmark_issues)
   * this branch fixed an issue where bookmark ids were only renumbered per subdocument, not over the whole document
+* the bleeding edge of [cloudconvert-python](https://github.com/cloudconvert/cloudconvert-python), specifically anything after [commit 5aedec17578107c0f28edaa7b4ab0b3d0a65c6f7](https://github.com/cloudconvert/cloudconvert-python/commit/5aedec17578107c0f28edaa7b4ab0b3d0a65c6f7)
+  * The 2.1.0 release on pypi does _not_ have the correct patches to work
+  * docassemble will complain when installing this directly from the github link. You will need to download the git repository, and upload it as a
+    zip file to docassemble in order to install it
 
 ## Airtable Config
 
