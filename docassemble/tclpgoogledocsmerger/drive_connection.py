@@ -129,7 +129,9 @@ def download_drive_docx(
 def get_folder_id(folder_name) -> Optional[str]:
   try:
     service = api.drive_service()
-    resp = service.files().list(spaces="drive", 
+    resp = service.files().list(spaces="drive",
+        supportsAllDrives=True,
+        includeItemsFromAllDrives=True,
         fields="nextPageToken, files(id, name)",
         q=f"mimeType='application/vnd.google-apps.folder' and sharedWithMe and name='{str(folder_name)}'").execute()
   except HttpError as ex:
@@ -151,6 +153,7 @@ def get_latest_file_for_clause(all_files: List, childs_name:str) -> Optional[str
   if matching_files:
     return next(iter(sorted_files), None)
   else:
+    log(f"No matching files found for clause {childs_name}")
     return None
 
 def get_files_in_folder(folder_name:str=None, folder_id:str=None, service=None):
@@ -170,6 +173,8 @@ def get_files_in_folder(folder_name:str=None, folder_id:str=None, service=None):
       # More metadata about the files in https://developers.google.com/drive/api/v3/reference/files
       response = service.files().list(spaces="drive", 
           fields="nextPageToken, files(id, name, mimeType, modifiedTime)", 
+          supportsAllDrives=True,
+          includeItemsFromAllDrives=True,
           q=f"trashed=false and '{folder_id}' in parents",
           pageToken=page_token).execute()
       for the_file in response.get('files', []):
@@ -178,6 +183,8 @@ def get_files_in_folder(folder_name:str=None, folder_id:str=None, service=None):
       # TODO(brycew): still concerned about the possibility of an infinite loop, so cap at 10000 items for now
       if page_token is None or len(items) > 10000:
         break
+    if not items:
+      log(f"No files found or no permission to access folder {folder_id}")
     return items
   except HttpError as ex:
     log(f"Could not connect to Google Drive to see files available: {ex}")
