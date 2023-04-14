@@ -32,6 +32,7 @@ code: |
   separate_column_info = [
     ('Practice Area', 'Practice Area', '', False),
     ('GIC Industry', 'Sector', '[More info here](https://en.wikipedia.org/wiki/Global_Industry_Classification_Standard)', False),
+    ('Jurisdiction', 'Jurisdiction', '', False),
     #('GIC Industry Group', 'GIC Industry Group', '[More info here](https://en.wikipedia.org/wiki/Global_Industry_Classification_Standard)', False),
     #('COP26 Net Zero Chapter', 'COP26 Net Zero Chapter', '', False),
   ]
@@ -76,6 +77,7 @@ objects:
 id: Main order block
 mandatory: True
 code: |
+  
   snapshot_interview_state
   clause_query_params
   reconsider('snapshot_interview_state')
@@ -136,6 +138,7 @@ code: |
     if tooltip:
       field_info['help'] = tooltip 
     select_fields.append(field_info)
+
 ---
 code: |
   # Take the interesting fields and make them 2 dimensional so easier to view in XLSX
@@ -187,7 +190,9 @@ question: |
 subquestion: |
   The Climate Clause Selector will create a bundle of your clauses to use online or to download as a Word (DOCX) document.
 fields:
+
   - code: select_fields
+  
   - I would like to improve the Climate Clause Selector: submitting_email
     datatype: yesnowide
     required: False
@@ -339,7 +344,7 @@ question: |
   We're compiling your documents
 subquestion: |
   This may take a few minutes, so leave this tab open. Thanks for waiting.
-
+  
   Since this document might contain many clauses, you should consider using the navigation pane when viewing it.
   In Word, you can do this by opening the “View” tab of the ribbon, and checking the “Navigation Pane” checkbox.
   In LibreOffice, you can press F5 or go to View > Navigator to see the equivalent feature.
