@@ -77,6 +77,7 @@ class MultiSelectIndex(DAObject):
         # Split the comma separated lists into actual lists
         "GIC Industry": split_and_strip,
         "GIC Industry Group": split_and_strip,
+        "Jurisdiction": split_and_strip,
         "F - Contract Emissions": split_and_strip,
         "F - Corp Gov": split_and_strip,
         "F - Reporting & Disclosures": split_and_strip,
@@ -91,9 +92,10 @@ class MultiSelectIndex(DAObject):
     }
     airtable_table = get_airtable(airtable_info, converters, redis_cache)
     if airtable_table is not None:
+      log('**getting data from airtable/redis**')
       self.table = airtable_table
     else:
-      log(f'Falling back to reading clause info from CSV at {csv_path}')
+      log(f'**Falling back to reading clause info from CSV at {csv_path}**')
       self.table = pd.read_csv(csv_path, converters=converters)
 
     self.table.sort_values(by=["Child's name"], inplace=True)
