@@ -58,6 +58,7 @@ def get_airtable_or_cache(airtable_info:Mapping[str, str], redis_cache=None) -> 
     ('GIC Industry Group', 'GIC Industry Group'),
     ('Timeline Main Phase', 'Timeline Main Phase'),
     ('Timeline Sub-Phase', 'Timeline Sub-Phase'),
+    ('Jurisdiction', 'Jurisdiction'),
     ('F - Corp Gov', 'F - Corp Gov'),
     ('F - Reporting & Disclosures', 'F - Reporting & Disclosures'),
     ('F - Corporate Mechanisms', 'F - Corporate Mechanims'),
