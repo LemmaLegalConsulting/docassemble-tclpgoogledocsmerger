@@ -90,7 +90,7 @@ class MultiSelectIndex(DAObject):
         "F - Resilience & Adaptation": split_and_strip,
         "F - Biodiversity": split_and_strip
     }
-    airtable_table = get_airtable(airtable_info, converters)#, redis_cache)
+    airtable_table = get_airtable(airtable_info, converters, redis_cache)
     if airtable_table is not None:
       log('**getting data from airtable/redis**')
       self.table = airtable_table
